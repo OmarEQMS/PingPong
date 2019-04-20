@@ -1,0 +1,80 @@
+newmtl stadium:wire_006135006
+illum 4
+Kd 0.02 0.53 0.02
+Ka 0.02 0.53 0.02
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_027177148
+illum 4
+Kd 0.11 0.69 0.58
+Ka 0.11 0.69 0.58
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_088088225
+illum 4
+Kd 0.35 0.35 0.88
+Ka 0.35 0.35 0.88
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_088144225
+illum 4
+Kd 0.35 0.56 0.88
+Ka 0.35 0.56 0.88
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_088199225
+illum 4
+Kd 0.35 0.78 0.88
+Ka 0.35 0.78 0.88
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_115115115
+illum 4
+Kd 0.45 0.45 0.45
+Ka 0.45 0.45 0.45
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_154185229
+illum 4
+Kd 0.60 0.73 0.90
+Ka 0.60 0.73 0.90
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_184228153
+illum 4
+Kd 0.72 0.89 0.60
+Ka 0.72 0.89 0.60
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_214228153
+illum 4
+Kd 0.84 0.89 0.60
+Ka 0.84 0.89 0.60
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
+newmtl stadium:wire_225198087
+illum 4
+Kd 0.88 0.78 0.34
+Ka 0.88 0.78 0.34
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.35 0.35 0.35
+Ns 32.00
