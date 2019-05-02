@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <cstdio>
+#include <ctime>
 using namespace std;
 
 typedef unsigned short ushort;
@@ -51,6 +53,152 @@ struct ReferenceFrame {
 	};
 };
 
+//Color
+//TODO - Make Color part of Light and Material
+struct ColorRGB {
+public:
+	uchar r, g, b;
+	ColorRGB() { r = g = b = 0; }
+	ColorRGB(ColorRGB& rgb) { r = rgb.r; g = rgb.g; b = rgb.b; }
+	ColorRGB(uchar rr, uchar gg, uchar bb) { r = rr; g = gg; b = bb; }
+	void Set(uchar rr, uchar gg, uchar bb) { r = rr; g = gg; b = bb; }
+};
+
+//Vertex
+struct Vertex3 {
+private:
+	double vertices[3] = { 0,0,0 };
+
+public:
+	static Vertex3 zero;
+
+	Vertex3() {
+		vertices[0] = 0; vertices[1] = 0; vertices[2] = 0;
+	}
+	Vertex3(double X, double Y, double Z) {
+		vertices[0] = X; vertices[1] = Y; vertices[2] = Z;
+	}
+
+	double* GetVertices() { return vertices; }
+	void SetVertices(double x, double y, double z) { SetX(x); SetY(y); SetZ(z); }
+
+	double GetX() { return vertices[0]; }
+	void SetX(double val) { vertices[0] = val; }
+	double GetY() { return vertices[1]; }
+	void SetY(double val) { vertices[1] = val; }
+	double GetZ() { return vertices[2]; }
+	void SetZ(double val) { vertices[2] = val; }
+
+	//Extras
+	void Unitario() {
+		double M = Magnitud();
+		SetX(GetX() / M);
+		SetY(GetY() / M);
+		SetZ(GetZ() / M);
+	}
+	double Magnitud() {
+		return sqrt(pow(GetX(), 2) + pow(GetY(), 2) + pow(GetZ(), 2));
+	}
+	static double Distance(Vertex3& vec1, Vertex3& vec2) {
+		return sqrt(pow(vec1.GetX() - vec2.GetX(), 2) + pow(vec1.GetY() - vec2.GetY(), 2) + pow(vec1.GetZ() - vec2.GetZ(), 2));
+	}
+
+	//Operaciones
+	Vertex3 operator+ (Vertex3 &vec) {
+		return Vertex3(GetX() + vec.GetX(), GetY() + vec.GetY(), GetZ() + vec.GetZ());
+	}
+	Vertex3 operator- (Vertex3 &vec) {
+		return Vertex3(GetX() - vec.GetX(), GetY() - vec.GetY(), GetZ() - vec.GetZ());
+	}
+	Vertex3 operator/ (double const &val) {
+		return Vertex3(GetX() / val, GetY() / val, GetZ() / val);
+	}
+	Vertex3 operator* (double const &val) {
+		return Vertex3(GetX() * val, GetY() * val, GetZ() * val);
+	}
+	// * = Cross Product
+	Vertex3 operator* (Vertex3 &vec) {
+		return Vertex3((GetY()*vec.GetZ() - GetZ()*vec.GetY()), -(GetX()*vec.GetZ() - GetZ()*vec.GetX()), (GetX()*vec.GetY() - GetY()*vec.GetX()));
+	}
+	// & = dot Product
+	double operator& (Vertex3 &vec) {
+		return ((GetX()*vec.GetX()) + (GetY()*vec.GetY()) + (GetZ()*vec.GetZ()));
+	}
+	// Each term for each
+	Vertex3 operator| (Vertex3 &vec) {
+		return Vertex3((GetX()*vec.GetX()), (GetY()*vec.GetY()), (GetZ()*vec.GetZ()));
+	}
+
+	//Comparaciones
+	bool operator==(Vertex3& other) {
+		if (GetX() == other.GetX() && GetY() == other.GetY() && GetZ() == other.GetZ()) return true;
+		return false;
+	}
+	bool operator!=(Vertex3& other) {
+		if (GetX() == other.GetX() && GetY() == other.GetY() && GetZ() == other.GetZ()) return false;
+		return true;
+	}
+
+};
+struct Vertex2 {
+private:
+	double vertices[2] = { 0,0 };
+public:
+	static Vertex2 zero;
+
+	Vertex2() {
+		vertices[0] = 0; vertices[1] = 0;
+	}
+	Vertex2(double X, double Y) {
+		vertices[0] = X; vertices[1] = Y;
+	}
+
+	double* GetVertices() { return vertices; }
+	void SetVertices(double x, double y) { SetX(x); SetY(y); }
+
+	double GetX() { return vertices[0]; }
+	void SetX(double val) { vertices[0] = val; }
+	double GetY() { return vertices[1]; }
+	void SetY(double val) { vertices[1] = val; }
+
+	//Extras
+	void Unitario() {
+		double M = Magnitud();
+		SetX(GetX() / M);
+		SetY(GetY() / M);
+	}
+	double Magnitud() {
+		return sqrt(pow(GetX(), 2) + pow(GetY(), 2));
+	}
+
+	//Operaciones
+	Vertex2 operator+ (Vertex2 &vec) {
+		return Vertex2(GetX() + vec.GetX(), GetY() + vec.GetY());
+	}
+	Vertex2 operator- (Vertex2 &vec) {
+		return Vertex2(GetX() - vec.GetX(), GetY() - vec.GetY());
+	}
+	Vertex2 operator/ (double const &val) {
+		return Vertex2(GetX() / val, GetY() / val);
+	}
+	Vertex2 operator* (double const &val) {
+		return Vertex2(GetX() * val, GetY() * val);
+	}
+	double operator* (Vertex2 &vec) {
+		return (GetX()*vec.GetY() - GetY()*vec.GetX());
+	}
+
+	//Comparaciones
+	bool operator==(Vertex2& other) {
+		if (GetX() == other.GetX() && GetY() == other.GetY()) return true;
+		return false;
+	}
+	bool operator!=(Vertex2& other) {
+		if (GetX() == other.GetX() && GetY() == other.GetY()) return false;
+		return true;
+	}
+};
+
 //Fog
 struct Fog {
 public:
@@ -87,16 +235,23 @@ private:
 
 	GLenum light;
 	bool enable = true;
+	bool automatico;
 
 public:
+	Light() {
+		automatico = false;
+	}
 	Light(GLenum luz, bool autom) {
-		if (autom) luces.push_back(this);
+		luces.push_back(this);
+		automatico = autom;
 		light = luz;
 	}
 
 	static void SetAll() {
 		for (int i = 0; i < luces.size(); i++) {
-			luces[i]->Set();
+			if (luces[i]->automatico) {
+				luces[i]->Set();
+			}
 		}
 	}
 	void Set() {
@@ -123,6 +278,11 @@ public:
 		glColor3fv(diffuse);
 		glutWireSphere(0.15, 3, 2);
 	}
+
+	Vertex3 GetPosition() { return Vertex3((double)position[0], (double)position[1], (double)position[2]); }
+	Vertex3 GetAmbient() { return Vertex3((double)ambient[0], (double)ambient[1], (double)ambient[2]); }
+	Vertex3 GetDiffuse() { return Vertex3((double)diffuse[0], (double)diffuse[1], (double)diffuse[2]); }
+	Vertex3 GetSpecular() { return Vertex3((double)specular[0], (double)specular[1], (double)specular[2]); }
 
 	void SetEnable(bool en) { enable = en; if (en) glEnable(light); else glDisable(light); }
 	bool GetEnable() { return enable; }
@@ -232,11 +392,16 @@ public:
 		glMaterialf(GL_FRONT, GL_SHININESS, shinnes); //specular exponent [0, 128] - high:100.0f  low:5.0  no:0.0
 	}
 
+	Vertex3 GetAmbient() { return Vertex3((double)ambient[0], (double)ambient[1], (double)ambient[2]); }
+	Vertex3 GetDiffuse() { return Vertex3((double)diffuse[0], (double)diffuse[1], (double)diffuse[2]); }
+	Vertex3 GetSpecular() { return Vertex3((double)specular[0], (double)specular[1], (double)specular[2]); }
+	double GetShinnes() { return shinnes; }
+
 	void Assign(float* emi, float* amb, float* diff, float* spec, float* shi) {
-		if (amb != NULL) {
+		if (emi != NULL) {
 			emission[0] = emi[0];
-			emission[1] = emi[0];
-			emission[2] = emi[0];
+			emission[1] = emi[1];
+			emission[2] = emi[2];
 		}
 		if (amb != NULL) {
 			ambient[0] = amb[0];
@@ -285,172 +450,7 @@ public:
 
 }; 
 
-//Vertex, Face and Mesh (indices empiezan en 1)
-struct Vertex3 {
-private:
-	double x; double y; double z;
-	double vertices[3] = { 0,0,0 };
-
-public:
-	static Vertex3 zero;
-
-	Vertex3() {
-		vertices[0] = 0; vertices[1] = 0; vertices[2] = 0;
-		x = 0; y = 0; z = 0;
-	}
-	Vertex3(double X, double Y, double Z) {
-		vertices[0] = X; vertices[1] = Y; vertices[2] = Z;
-		x = X; y = Y; z = Z;
-	}
-
-	double* GetVertices() { return vertices; }
-	void SetVertices(double x, double y, double z) { SetX(x); SetY(y); SetZ(z); }
-
-	double GetX() { return x; }
-	void SetX(double val) { x = val; vertices[0] = val; }
-	double GetY() { return y; }
-	void SetY(double val) { y = val; vertices[1] = val; }
-	double GetZ() { return z; }
-	void SetZ(double val) { z = val; vertices[2] = val; }
-
-	//Extras
-	void Unitario() {
-		double M = Magnitud();
-		SetX(x / M);
-		SetY(y / M);
-		SetZ(z / M);
-	}
-	double Magnitud() {
-		return sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
-	}
-
-	//Operaciones
-	Vertex3 operator+ (Vertex3 const &vec) {
-		return Vertex3(x + vec.x, y + vec.y, z + vec.z );
-	}
-	Vertex3 operator- (Vertex3 const &vec) {
-		return Vertex3(x - vec.x, y - vec.y, z - vec.z);
-	}
-	Vertex3 operator/ (double const &val) {
-		return Vertex3(x / val, y / val, z / val);
-	}
-	Vertex3 operator* (double const &val) {
-		return Vertex3(x * val, y * val, z * val);
-	}
-	Vertex3 operator* (Vertex3 const &vec) {
-		return Vertex3((y*vec.z - z*vec.y), -(x*vec.z - z*vec.x), (x*vec.y - y*vec.x));
-	} 
-
-	Vertex3 operator+= (Vertex3 const &vec) {
-		SetX(x + vec.x); SetY(y + vec.y); SetZ(z + vec.z);
-		return *this;
-	}
-	Vertex3 operator-= (Vertex3 const &vec) {
-		SetX(x - vec.x); SetY(y - vec.y); SetZ(z - vec.z);
-		return *this;
-	}
-	Vertex3 operator/= (double const &val) {
-		SetX(x / val); SetY(y / val); SetZ(z / val);
-		return *this;
-	}
-	Vertex3 operator*= (double const &val) {
-		SetX(x * val); SetY(y * val); SetZ(z * val);
-		return *this;
-	}
-	Vertex3 operator*= (Vertex3 const &vec) {
-		SetX(y*vec.z - z*vec.y); SetY(-(x*vec.z - z*vec.x)); SetZ(x*vec.y - y*vec.x);
-		return *this;
-	}
-
-	//Comparaciones
-	bool operator==(const Vertex3& other) {
-		if (x == other.x && y == other.y && z == other.z) return true;
-		return false;
-	}
-	bool operator!=(const Vertex3& other) {
-		if (x == other.x && y == other.y && z == other.z) return false;
-		return true;
-	}
-
-};
-struct Vertex2 {
-private:
-	double x; double y;
-	double vertices[2];
-public:
-	static Vertex2 zero;
-
-	Vertex2() {
-		vertices[0] = 0; vertices[1] = 0;
-		x = 0; y = 0;
-	}
-	Vertex2(double X, double Y) {
-		vertices[0] = X; vertices[1] = Y;
-		x = X; y = Y;
-	}
-
-	double* GetVertices() { return vertices; }
-	void SetVertices(double x, double y) { SetX(x); SetY(y); }
-
-	double GetX() { return x; }
-	void SetX(double val) { x = val; vertices[0] = val; }
-	double GetY() { return y; }
-	void SetY(double val) { y = val; vertices[1] = val; }
-
-	//Extras
-	void Unitario() {
-		double M = Magnitud();
-		SetX(x / M);
-		SetY(y / M);
-	}
-	double Magnitud() {
-		return sqrt(pow(x, 2) + pow(y, 2));
-	}
-
-	//Operaciones
-	Vertex2 operator+ (Vertex2 const &vec) {
-		return Vertex2(x + vec.x, y + vec.y);
-	}
-	Vertex2 operator- (Vertex2 const &vec) {
-		return Vertex2(x - vec.x, y - vec.y);
-	}
-	Vertex2 operator/ (double const &val) {
-		return Vertex2(x / val, y / val);
-	}
-	Vertex2 operator* (double const &val) {
-		return Vertex2(x * val, y * val);
-	}
-	double operator* (Vertex2 const &vec) {
-		return (x*vec.y - y*vec.x);
-	}
-
-	Vertex2 operator+= (Vertex2 const &vec) {
-		SetX(x + vec.x); SetY(y + vec.y);
-		return *this;
-	}
-	Vertex2 operator-= (Vertex2 const &vec) {
-		SetX(x - vec.x); SetY(y - vec.y);
-		return *this;
-	}
-	Vertex2 operator/= (double const &val) {
-		SetX(x / val); SetY(y / val);
-		return *this;
-	}
-	Vertex2 operator*= (double const &val) {
-		SetX(x * val); SetY(y * val);
-		return *this;
-	}
-
-	//Comparaciones
-	bool operator==(const Vertex2& other) {
-		if (x == other.x && y == other.y) return true;
-		return false;
-	}
-	bool operator!=(const Vertex2& other) {
-		if (x == other.x && y == other.y) return false;
-		return true;
-	}
-};
+//Face and Mesh (indices empiezan en 1)
 struct Face {
 public:
 	vector<int> vn;
@@ -478,28 +478,16 @@ public:
 };
 struct Mesh {
 public:
-	Vertex3* position;
-	Vertex3* rotation;
 	vector<int> faces;
 	int material;
 	int textura;
 	bool visible = true;
 
 	Mesh() {
-		position = new Vertex3();
-		rotation = new Vertex3();
 		material = -1;
 		textura = -1;
 	}
 	Mesh(int mat, int tex) {
-		position = new Vertex3();
-		rotation = new Vertex3();
-		material = mat;
-		textura = tex;
-	}
-	Mesh(int mat, int tex, Vertex3* pos, Vertex3* rot) {
-		position = pos;
-		rotation = rot;
 		material = mat;
 		textura = tex;
 	}
@@ -511,239 +499,8 @@ public:
 	
 };
 
-//Matrix
-struct TransformMatrix {
-private:
-	struct Matrix { 
-	public:
-		double matrix[4][4]; 
-		Matrix() {}
-		Matrix(double mat[4][4]) { 
-			for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) matrix[i][j] = mat[i][j]; 
-		}; 
-		void Set(Matrix mat) {
-			for (int i = 0; i < 4; i++)
-				for (int j = 0; j < 4; j++)
-					matrix[i][j] = mat.matrix[i][j];
-		}
-	};
-	vector<Matrix> pila;
-	Matrix matrix;
-
-public:
-	void PushMatrix() { pila.push_back(*(new Matrix(matrix.matrix))); }
-	void PopMatrix() { matrix.Set(pila.back()); pila.pop_back(); }
-
-	void Identity() {
-		double identity[4][4] = { { 1,0,0,0 },{ 0,1,0,0 },{ 0,0,1,0 },{ 0,0,0,1 } };
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-				matrix.matrix[i][j] = identity[i][j];
-	}
-
-	Vertex3 MultVertex(Vertex3 point) {
-		double punto[4] = { point.GetX(), point.GetY(), point.GetZ(), 1 };
-		double result[4] = {0,0,0,0};
-		for (int i = 0; i < 4; i++) { //Fila
-			for (int j = 0; j < 1; j++) { //Columna
-				for (int k = 0; k < 4; k++) {
-					result[i] += matrix.matrix[i][k] * punto[k]; //j = 0
-				}
-			}
-		}
-		return Vertex3(result[0], result[1], result[2]);
-	}
-	void MulMatrix(Matrix mat) {
-		double result[4][4] = { { 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 } };
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
-				for (int k = 0; k < 4; k++) {
-					result[i][j] += matrix.matrix[i][k] * mat.matrix[k][j];
-				}
-			}
-		}
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-				matrix.matrix[i][j] = result[i][j];
-	}
-	
-	void Translated(double x, double y, double z) {
-		double translate[4][4] = { { 1,0,0,x },{ 0,1,0,y },{ 0,0,1,z },{ 0,0,0,1 } };
-		MulMatrix(Matrix(translate));
-	}
-	void RotateX(double angle){
-		angle = angle * M_PI / 180;
-		double rotate[4][4] = { { 1,0,0,0 },{ 0,cos(angle),sin(angle),0 },{ 0,-sin(angle),cos(angle),0 },{ 0,0,0,1 } };
-		MulMatrix(Matrix(rotate));
-	}
-	void RotateY(double angle) {
-		angle = angle * M_PI / 180;
-		double rotate[4][4] = { { cos(angle),0,sin(angle),0 },{ 0,1,0,0 },{ -sin(angle),0,cos(angle),0 },{ 0,0,0,1 } };
-		MulMatrix(Matrix(rotate));
-	}
-	void RotateZ(double angle) {
-		angle = angle * M_PI / 180;
-		double rotate[4][4] = { { cos(angle),sin(angle),0,0 },{ -sin(angle),cos(angle),0,0 },{ 0,0,1,0 },{ 0,0,0,1 } };
-		MulMatrix(Matrix(rotate));
-	}
-	void Scale(double x, double y, double z) {
-		double scale[4][4] = { { x,0,0,0 },{ 0,y,0,0 },{ 0,0,z,0 },{ 0,0,0,1 } };
-		MulMatrix(Matrix(scale));
-	}
-
-};
-
-//Color
-struct ColorRGB {
-public:
-	uchar r, g, b;
-	ColorRGB() { r = g = b = 0; }
-	ColorRGB(ColorRGB& rgb) { r = rgb.r; g = rgb.g; b = rgb.b; }
-	ColorRGB(uchar rr, uchar gg, uchar bb) { r = rr; g = gg; b = bb; }
-	void Set(uchar rr, uchar gg, uchar bb) { r = rr; g = gg; b = bb; }
-};
-
 //Shapes
 enum Shape { Cylinder, Sphere, Cube, Icosaedro, Quad };
-
-//MAINS
-
-//Camera
-struct CameraTool {
-private:	
-	Vertex2 mousePosAnt;
-	bool Dim_3D_2D;	
-	//PanTiltMove Tool	
-	Vertex2 rotCam;	float camZoom = 8; float MaxCamZomm = 8;
-	bool panTool = false, zoomTool = false, moveTool = false;
-	//Config Camera	
-	float params3D[3]; //FoV-Y, Near, Far
-	float params2D; //FoV-Y, Near, Far
-public:	
-	Vertex3 CamaraCenter;
-	Vertex3 CamaraEye; //3D y 3D
-
-	CameraTool(float fovY, float nearZ, float farZ) { // 60, 0.1, 70
-		Dim_3D_2D = true;
-		params3D[0] = fovY;
-		params3D[1] = nearZ;
-		params3D[2] = farZ;
-		rotCam.SetVertices(90, 90);
-		CamaraCenter.SetVertices(0, 0, 0);
-		CamaraEye.SetVertices(0, 0, camZoom);
-	}
-	CameraTool(float height) {
-		Dim_3D_2D = false;
-		params2D = height;
-		rotCam.SetVertices(90, 90);
-		CamaraCenter.SetVertices(0, 0, 0);
-		CamaraEye.SetVertices(0, 0, camZoom);
-	}
-	void processSpecialKeys(int key, int x, int y) {
-		
-	}
-	void keyboard(unsigned char key, int x, int y) {
-		
-	}
-	void mouse(int btn, int state, int x, int y) {
-		if (state == GLUT_DOWN) {
-			mousePosAnt.SetVertices(x, y);
-			if (btn == GLUT_LEFT_BUTTON) {
-				panTool = !panTool;
-			}
-			else if (btn == GLUT_RIGHT_BUTTON) {
-				zoomTool = !zoomTool;
-			}
-			else if (btn == GLUT_MIDDLE_BUTTON) {
-				moveTool = !moveTool;
-			}
-		}
-	}
-	void mouse_idle(int x, int y) {
-		if (Dim_3D_2D) {
-			PanTiltMove3D(Vertex2(x, y));
-		} else {
-			PanTiltMove2D(Vertex2(x, y));
-		}
-		mousePosAnt.SetVertices(x, y);
-	}
-
-	//Set
-	void Set() {
-		if (Dim_3D_2D) {
-			Set3D();
-		} else {
-			Set2D();
-		}
-	}
-
-private:
-
-	//PanTiltMove
-	void PanTiltMove3D(Vertex2 mousePos) {
-		if (panTool) {
-			rotCam.SetVertices(rotCam.GetX() + (mousePos.GetX() - mousePosAnt.GetX()) / 3.0, rotCam.GetY() - (mousePos.GetY() - mousePosAnt.GetY()) / 3.0);
-		}
-		else if (zoomTool) {
-			camZoom += (mousePosAnt.GetX() - mousePos.GetX()) / 10.0;
-		}
-		else if (moveTool) {
-			TransformMatrix CamMat;
-			CamMat.Identity();
-			CamMat.Translated(CamaraCenter.GetX(), CamaraCenter.GetY(), CamaraCenter.GetZ());
-			CamMat.RotateY(-rotCam.GetX() + 90);
-			CamMat.RotateX(-rotCam.GetY());
-			Vertex3 Point(((mousePosAnt.GetX() - mousePos.GetX()) / 100.0), 0, ((mousePosAnt.GetY() - mousePos.GetY()) / 100.0));
-			CamaraCenter = CamMat.MultVertex(Point);
-		}
-		if (camZoom > MaxCamZomm) { camZoom = MaxCamZomm; }
-		if (camZoom < 0) { camZoom = 0; }
-		if (rotCam.GetX() > 360) { rotCam.SetX(360); }
-		if (rotCam.GetX() < 0) { rotCam.SetX(0); }
-		if (rotCam.GetY() > 360) { rotCam.SetY(360); }
-		if (rotCam.GetY() < 0) { rotCam.SetY(0); }
-
-		CamaraEye.SetX(CamaraCenter.GetX() + camZoom * sin(rotCam.GetY() * (M_PI / 180.0)) * cos(rotCam.GetX() * (M_PI / 180.0)));
-		CamaraEye.SetZ(CamaraCenter.GetZ() + camZoom * sin(rotCam.GetY() * (M_PI / 180.0)) * sin(rotCam.GetX() * (M_PI / 180.0)));
-		CamaraEye.SetY(CamaraCenter.GetY() + camZoom * cos(rotCam.GetY() * (M_PI / 180.0)));
-	}
-	void PanTiltMove2D(Vertex2 mousePos) {
-		if (zoomTool) {
-			params2D += (mousePosAnt.GetX() - mousePos.GetX()) / 10.0;
-		}
-		else if (moveTool) {
-			TransformMatrix CamMat;
-			CamMat.Identity();
-			CamMat.Translated(CamaraEye.GetX(), CamaraEye.GetY(), CamaraEye.GetZ());
-			Vertex3 Point(((mousePosAnt.GetX() - mousePos.GetX()) / 100.0), -((mousePosAnt.GetY() - mousePos.GetY()) / 100.0), 0);
-			CamaraEye = CamMat.MultVertex(Point);
-		}
-		if (camZoom > MaxCamZomm) { camZoom = MaxCamZomm; }
-		if (camZoom < 0) { camZoom = 0; }
-
-	}
-
-	//Set
-	void Set3D() {
-		float w = glutGet(GLUT_WINDOW_WIDTH), h = glutGet(GLUT_WINDOW_HEIGHT);
-		glViewport(0, 0, (GLsizei)w, (GLsizei)h); //set the viewport size, based on fuction input 
-		glMatrixMode(GL_PROJECTION); glLoadIdentity(); //set the projection matrix set as identity	
-		//3D
-		gluPerspective(params3D[0], (GLfloat)w / (GLfloat)h, params3D[1], params3D[2]); //then set perspective projection parameters based on aspect ratio
-		glMatrixMode(GL_MODELVIEW); glLoadIdentity(); //set the model view matrix to identity
-		gluLookAt(CamaraEye.GetX(), CamaraEye.GetY(), CamaraEye.GetZ(), CamaraCenter.GetX(), CamaraCenter.GetY(), CamaraCenter.GetZ(), 0.0, 1.0, 0.0);
-		Light::SetAll(); //Para que no se peguen a mi camara
-	}
-	void Set2D() {
-		float w = glutGet(GLUT_WINDOW_WIDTH), h = glutGet(GLUT_WINDOW_HEIGHT);
-		float ww = params2D * (w/h);
-		glViewport(0, 0, (GLsizei)w, (GLsizei)h); //set the viewport size, based on fuction input 
-		glMatrixMode(GL_PROJECTION); glLoadIdentity(); //set the projection matrix set as identity	
-		//2D 
-		gluOrtho2D(CamaraEye.GetX() - (ww / 2.0), CamaraEye.GetX() + (ww / 2.0), CamaraEye.GetY() - (params2D / 2.0), CamaraEye.GetY() + (params2D / 2.0));
-		Light::SetAll(); //Para que no se peguen a mi camara
-	}
-};
 
 //BitMap
 struct Texture {
@@ -774,6 +531,15 @@ public:
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode); // Set texture mode (GL_DECAL, GL_ADD, GL_MODULATE, GL_BLEND)
 		glBindTexture(GL_TEXTURE_2D, name); // Bind texture	
 	}
+
+	void operator= (Texture const &text) {
+		nRows = text.nRows;
+		nCols = text.nCols;
+		pixel = text.pixel;
+		name = text.name;
+		SetTexture();
+	}
+		
 };
 
 struct ReadBitMap {
@@ -920,38 +686,79 @@ public:
 	}
 };
 
+//Timer
+struct Timer {
+private:
+	bool clear = false;
+public:
+	template<typename Function> void setTimeout(Function function, int delay) {
+		this->clear = false;
+		thread t([=]() {
+			if (this->clear) return;
+			this_thread::sleep_for(chrono::milliseconds(delay));
+			if (this->clear) return;
+			function();
+		});
+		t.detach();
+	}
+	template<typename Function> void setInterval(Function function, int interval) {
+		this->clear = false;
+		thread t([=]() {
+			while (true) {
+				if (this->clear) return;
+				this_thread::sleep_for(std::chrono::milliseconds(interval));
+				if (this->clear) return;
+				function();
+			}
+		});
+		t.detach();
+	}
+	void stop() {
+		this->clear = true;
+	}
+};
+
+//INPUT
+class Input {
+	//TODO
+};
+
 //GameObject
 struct  GameObject {
 public:
+	static vector<GameObject*> GameObjects;
+public:
+	int index;
 	Vertex3* position;
 	Vertex3* rotation;
- 	//Todos los indices inician desde 0
-	vector<Vertex3> vertexes;
+	vector<Vertex3> vertexes; //inician desde 0
 	vector<Vertex3> vertexNormals;
-	vector<Vertex2> vertexTexture;
-	vector<Face> faces;
+	vector<Vertex2> vertexTexture;	
 	vector<Mesh> meshes;
+	vector<Face> faces;
 	vector<Texture>	textura;
 	vector<Material> material;
-	//Bounding Box
-	double boundingBox[6] = { 0,0,0,0,0,0 }; //X+-, Y+-, Z+-
-	//Hierarchical Model
-	vector<vector<int>> hierarchical;
 	bool visible = true;
-	
+	bool automatico;
+
 	GameObject() {
+		index = GameObjects.size();
+		GameObjects.push_back(this);
+	}
+	void Init(string name) {
 		position = new Vertex3();
 		rotation = new Vertex3();
-		hierarchical.resize(1);
-		hierarchical[0].resize(1);
-		hierarchical[0][0] = 0; // No hay meshes
+		automatico = true;
 	}
-	GameObject(Vertex3* pos, Vertex3* rot) {
+	void Init(string name, bool autom) {
+		position = new Vertex3();
+		rotation = new Vertex3();
+		automatico = autom;
+	}
+	void Init(string name, Vertex3* pos, Vertex3* rot, bool autom) {
 		position = pos;
 		rotation = rot;
-		hierarchical.resize(1);
-		hierarchical[0].resize(1);
-		hierarchical[0][0] = 0; // No hay meshes
+		automatico = autom;
 	}
 
 	void setVertexes(Vertex3* ver, int n) {
@@ -966,62 +773,349 @@ public:
 	}
 	void pushFace(Face f, int mesh) {
 		if (mesh >= meshes.size()) {
-			pushMesh(-1, -1, 0);
+			pushMesh(-1, -1);
 		}
+		int nuevo = faces.size();
 		faces.push_back(f);
-		meshes[mesh].faces.push_back(faces.size() - 1);
+		meshes[mesh].faces.push_back(nuevo);
 	}
-	int pushMesh(int mat, int tex, int padre) {				
+	int pushMesh(int mat, int tex) {
+		int nuevo = meshes.size();
 		meshes.push_back(Mesh(mat, tex));
-		int nuevo = meshes.size(); //Index nuevo - meshes van de 1..n 
-		//Hierarchical
-		hierarchical.resize(nuevo + 1); //Le creamos su arbol genealogico
-		hierarchical[nuevo].resize(1, 0); //El nuevo tiene 0 hijos
-		int hijosP = hierarchical[padre][0]; //Los hijos actuales de mi padre
-		hierarchical[padre].resize(hijosP + 2, 0); //Me agrego una casilla
-		hierarchical[padre][0] = hijosP + 1; //Ub hijo mas
-		hierarchical[padre][hijosP + 1] = nuevo; //Soy yo
-		//Return mesh ID
-		return nuevo - 1;
+		return nuevo;
 	}
-	void RemoveChildHierarchical(int hijo, int padre) {
-		int hijosP = hierarchical[padre][0]; //Los hijos actuales de mi padre
-		for (int i = 1; i <= hijosP; i++) {
-			if (hierarchical[padre][i] == hijo) {
-				hierarchical[padre][i] = hierarchical[padre][hijosP];
-				hierarchical[padre].pop_back();
-				i--; hijosP--;
-				hierarchical[padre][0] = hijosP;
+	Material* pushMaterial(int& index) {
+		index = material.size();
+		material.resize(index + 1);
+		return &material[index];
+	}
+	Texture* pushTexture(int& index) {
+		index = textura.size();
+		textura.resize(index + 1);
+		return &textura[index];
+	}
+
+	static void DrawAll() {
+		for (int i = 0; i < GameObjects.size(); i++) {
+			if (GameObjects[i]->automatico) {
+				GameObjects[i]->Draw();
 			}
 		}
 	}
-	void AddChildHierarchical(int hijo, int padre) {
-		int hijosP = hierarchical[padre][0]; //Los hijos actuales de mi padre
-		hierarchical[padre].resize(hijosP + 2, 0); //Me agrego una casilla
-		hierarchical[padre][0] = hijosP + 1; //Ub hijo mas
-		hierarchical[padre][hijosP + 1] = hijo; //Soy yo
+
+	void Draw() {
+		if (visible) {
+			glPushMatrix();
+			glTranslated(position->GetX(), position->GetY(), position->GetZ());
+			glRotated(rotation->GetY(), 0, 1, 0);
+			glRotated(rotation->GetX(), 1, 0, 0);
+			glRotated(rotation->GetZ(), 0, 0, 1);
+			//Iterate Meshes
+			for (int i = 0; i < meshes.size(); i++) {
+				if (meshes[i].visible) {
+					if (meshes[i].textura >= 0) { glEnable(GL_LIGHTING);  glEnable(GL_TEXTURE_2D); textura[meshes[i].textura].DisplayTexture(meshes[i].material >= 0); }
+					else { glDisable(GL_TEXTURE_2D); }
+					if (meshes[i].material >= 0) { glEnable(GL_LIGHTING); material[meshes[i].material].Set(); }
+
+					for (int j = 0; j < meshes[i].faces.size(); j++) {
+						glBegin(GL_POLYGON);
+						for (int k = 0; k < faces[meshes[i].faces[j]].count(); k++) {
+							glNormal3dv(vertexNormals[faces[meshes[i].faces[j]].vn[k]].GetVertices());
+							if (meshes[i].textura >= 0) glTexCoord2dv(vertexTexture[faces[meshes[i].faces[j]].vt[k]].GetVertices());
+							glVertex3dv(vertexes[faces[meshes[i].faces[j]].v[k]].GetVertices());
+						}
+						glEnd();
+					}
+				}
+			}
+			glPopMatrix();
+		}
 	}
 	
-	void CalculateBoundingBox() {
-		bool first = false;
-		TransformMatrix matrix; matrix.Identity();
-		matrix.PushMatrix();
-		for (int i = 1; i <= hierarchical[0][0]; i++) {
-			CalculateBoundingBoxHierarchical(matrix, hierarchical[0][i] - 1, first);
-		}
-		matrix.PopMatrix();
+	void Reset() {
+		//TODO - Delete Objects
 	}
-	void CalculateBoundingBoxHierarchical(TransformMatrix& matrix, int mesh, bool& first) {
-		//Transform
-		matrix.PushMatrix();
-		matrix.Translated(meshes[mesh].position->GetX(), meshes[mesh].position->GetY(), meshes[mesh].position->GetZ());
-		matrix.RotateY(meshes[mesh].rotation->GetY());
-		matrix.RotateX(meshes[mesh].rotation->GetX());
-		matrix.RotateZ(meshes[mesh].rotation->GetZ());
-		//GetVertices
-		for (int j = 0; j < meshes[mesh].faces.size(); j++) {
-			for (int k = 0; k < faces[meshes[mesh].faces[j]].count(); k++) {
-				Vertex3 point = matrix.MultVertex(vertexes[faces[meshes[mesh].faces[j]].v[k]]);
+	void ResetMesh() {
+		//TODO - Delete Mesh from Objects
+	}
+};
+
+//TransformMatrix
+struct TransformMatrix {
+private:
+	struct Matrix {
+	public:
+		double matrix[4][4];
+		Matrix() {}
+		Matrix(double mat[4][4]) {
+			for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) matrix[i][j] = mat[i][j];
+		};
+		void Set(Matrix mat) {
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+					matrix[i][j] = mat.matrix[i][j];
+		}
+	};
+	vector<Matrix> pila;
+	Matrix matrix;
+
+public:
+	void PushMatrix() { pila.push_back(*(new Matrix(matrix.matrix))); }
+	void PopMatrix() { matrix.Set(pila.back()); pila.pop_back(); }
+
+	void Identity() {
+		double identity[4][4] = { { 1,0,0,0 },{ 0,1,0,0 },{ 0,0,1,0 },{ 0,0,0,1 } };
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				matrix.matrix[i][j] = identity[i][j];
+	}
+
+	Vertex3 MultVertex(Vertex3 point) {
+		double punto[4] = { point.GetX(), point.GetY(), point.GetZ(), 1 };
+		double result[4] = { 0,0,0,0 };
+		for (int i = 0; i < 4; i++) { //Fila
+			for (int j = 0; j < 1; j++) { //Columna
+				for (int k = 0; k < 4; k++) {
+					result[i] += matrix.matrix[i][k] * punto[k]; //j = 0
+				}
+			}
+		}
+		return Vertex3(result[0], result[1], result[2]);
+	}
+	Vertex3 MultVector(Vertex3 vector) {
+		double punto[4] = { vector.GetX(), vector.GetY(), vector.GetZ(), 0 };
+		double result[4] = { 0,0,0,0 };
+		for (int i = 0; i < 4; i++) { //Fila
+			for (int j = 0; j < 1; j++) { //Columna
+				for (int k = 0; k < 4; k++) {
+					result[i] += matrix.matrix[i][k] * punto[k]; //j = 0
+				}
+			}
+		}
+		return Vertex3(result[0], result[1], result[2]);
+	}
+	void MultGameObject(GameObject* go) {
+		for (int i = 0; i < go->vertexes.size(); i++) {
+			go->vertexes[i] = MultVertex(go->vertexes[i]);
+		}
+	}
+	void MultGameObjectMesh(GameObject* go, int mesh) {
+		vector<int> repeat;
+		for (int j = 0; j < go->meshes[mesh].faces.size(); j++) {
+			for (int k = 0; k < go->faces[go->meshes[mesh].faces[j]].count(); k++) {
+				int v = go->faces[go->meshes[mesh].faces[j]].v[k];
+				bool rep = false; for (int l = 0; l < repeat.size(); l++) { if (repeat[l] == v) rep = true; }
+				if (!rep) {
+					repeat.push_back(v);
+					go->vertexes[v] = MultVertex(go->vertexes[v]);
+				}
+			}
+		}
+	}
+
+	void MulMatrix(Matrix mat) {
+		double result[4][4] = { { 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 } };
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				for (int k = 0; k < 4; k++) {
+					result[i][j] += matrix.matrix[i][k] * mat.matrix[k][j];
+				}
+			}
+		}
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				matrix.matrix[i][j] = result[i][j];
+	}
+
+	void Translated(double x, double y, double z) {
+		double translate[4][4] = { { 1,0,0,x },{ 0,1,0,y },{ 0,0,1,z },{ 0,0,0,1 } };
+		MulMatrix(Matrix(translate));
+	}
+	void RotateX(double angle) {
+		angle = angle * M_PI / 180;
+		double rotate[4][4] = { { 1,0,0,0 },{ 0,cos(angle),sin(angle),0 },{ 0,-sin(angle),cos(angle),0 },{ 0,0,0,1 } };
+		MulMatrix(Matrix(rotate));
+	}
+	void RotateY(double angle) {
+		angle = angle * M_PI / 180;
+		double rotate[4][4] = { { cos(angle),0,sin(angle),0 },{ 0,1,0,0 },{ -sin(angle),0,cos(angle),0 },{ 0,0,0,1 } };
+		MulMatrix(Matrix(rotate));
+	}
+	void RotateZ(double angle) {
+		angle = angle * M_PI / 180;
+		double rotate[4][4] = { { cos(angle),sin(angle),0,0 },{ -sin(angle),cos(angle),0,0 },{ 0,0,1,0 },{ 0,0,0,1 } };
+		MulMatrix(Matrix(rotate));
+	}
+	void Scale(double x, double y, double z) {
+		double scale[4][4] = { { x,0,0,0 },{ 0,y,0,0 },{ 0,0,z,0 },{ 0,0,0,1 } };
+		MulMatrix(Matrix(scale));
+	}
+
+};
+
+//Physics
+struct Physics {
+public:
+	static vector<Physics*> Physicses;
+	static Vertex3 globalAcceleration;
+	static double dt;
+public:
+	int index;
+	Vertex3* position;
+	Vertex3* velocity;
+	Vertex3* acceleration;
+	double masa;
+
+	Physics() {
+		index = Physicses.size();
+		Physicses.push_back(this);
+	}
+	void Init(Vertex3* pos, double masa) {
+		position = pos;
+		this->masa = masa;
+		velocity = new Vertex3();
+		acceleration = new Vertex3();
+	}
+
+	//Impulso
+	//I = F dt
+	//F = m a
+	//I / m = a dt
+	//Colisiones elasticas, dos objetos movibles
+	// P = m v
+	// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
+	// V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
+	//Movimiento
+	//xt = xt - 1 + vt dt
+	//vt = vt - 1 + at dt
+	//atotal = at + aext + auser
+
+	void OnCollision(Vertex3 direction, Physics* other) { //Todo se conserva		
+		if (other == NULL) { //Velocity = Reflected Velocity if other physics == NULL
+
+
+		} else { //Si el otro tambien tiene phisicas
+
+			// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
+			// V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
+		}
+	}
+
+	void AddImpulse(Vertex3 imp) {
+		Vertex3 acc = imp / masa;
+		*acceleration = acc;
+	}
+
+	static void UpdatePhysics() {
+		for (int i = 0; i < Physicses.size(); i++) {
+			*Physicses[i]->acceleration = *Physicses[i]->acceleration + globalAcceleration;
+			*Physicses[i]->velocity = *Physicses[i]->velocity + *Physicses[i]->acceleration * dt;
+			*Physicses[i]->position = *Physicses[i]->position + *Physicses[i]->velocity * dt;	
+			*Physicses[i]->acceleration = Vertex3::zero;
+		}
+	}
+
+	//TODO
+};
+
+//BoundingBox Collisions
+struct BoundingBox { //TODO
+public:
+	static vector<BoundingBox*> BoundingBoxes;
+	static vector<vector<int>> collisionDetection;
+public:
+	int index;
+	string colliderName;
+	double peso;
+	Physics* physiscs;
+	Vertex3* position;
+	Vertex3* rotation;
+	void (*OnCollision)(BoundingBox* other, Vertex3 direction);
+	double boundingBox[6] = { 0,0,0,0,0,0 }; //X+-, Y+-, Z+-
+	Vertex3 centerBox;
+
+	BoundingBox() {		
+		index = BoundingBoxes.size();
+		BoundingBoxes.push_back(this);
+		collisionDetection.resize(collisionDetection.size() + 1);
+		for (int i = 0; i < collisionDetection.size() - 1; i++) {
+			collisionDetection[i].resize(i, 0);
+		}
+		this->OnCollision = OnCollision;
+	}
+	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, Physics* phy, void(*OnCollision)(BoundingBox* other, Vertex3 direction)) {
+		colliderName = name;
+		position = pos;
+		rotation = rot;
+		physiscs = phy;
+		this->OnCollision = OnCollision;
+		CalculateBoundingBoxGameObject(go);
+	}
+	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, int mesh, Physics* phy, void(*OnCollision)(BoundingBox* other, Vertex3 direction)) {
+		colliderName = name;
+		position = pos;
+		rotation = rot;
+		physiscs = phy;
+		this->OnCollision = OnCollision;
+		bool meshB = true;
+		CalculateBoundingBoxMesh(go, mesh, meshB);
+	}
+
+	static void AddCollisionDetection(int indexA, int indexB, bool value) {
+		if ((indexA == indexB) || (indexA >= collisionDetection.size()) || (indexB >= collisionDetection.size())) return;
+		int prim = (indexA < indexB) ? indexA : indexB;
+		int seg = (indexA < indexB) ? indexB : indexA;
+		collisionDetection[seg][prim] = value? 1 : 0;
+	}
+	static void CheckCollisions() {
+		TransformMatrix matrix;
+		for (int i = 0; i < collisionDetection.size(); i++) {
+			for (int j = 0; j < collisionDetection[i].size(); j++) {
+				if (collisionDetection[i][j] == 1) {
+					bool colision = true;
+					//BoundingBoxes
+					//Saco la normal de los dos bounding boxes
+					//Itero las normales
+					//Colapso los puntos
+					//Si en alguna normal no interseccion colision = false;
+					if (colision) {
+						Vertex3 vectorI, vectorJ; //El vector entra en el objeto
+						//Si los dos tienen fisicas, Calculo el vector de colision es A- B y B - A
+						if (BoundingBoxes[i]->physiscs != NULL && BoundingBoxes[j]->physiscs != NULL) {
+							vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+							vectorJ = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
+						} else {
+
+						}
+						vectorI.Unitario();
+						vectorJ.Unitario();
+						//Physics Collision
+						if (BoundingBoxes[i]->physiscs != NULL) BoundingBoxes[i]->physiscs->OnCollision(vectorI, BoundingBoxes[j]->physiscs);
+						if (BoundingBoxes[j]->physiscs != NULL) BoundingBoxes[j]->physiscs->OnCollision(vectorJ, BoundingBoxes[i]->physiscs);
+						//Custom Collisions
+						if (BoundingBoxes[i]->OnCollision != NULL) BoundingBoxes[i]->OnCollision(BoundingBoxes[j], vectorI);
+						if (BoundingBoxes[j]->OnCollision != NULL) BoundingBoxes[j]->OnCollision(BoundingBoxes[i], vectorJ);
+					}
+				}
+			}
+		}
+	}
+	
+	//TODO Colision
+
+private:
+	void CalculateBoundingBoxGameObject(GameObject* go) {
+		bool first = false;
+		for (int i = 0; i < go->meshes.size(); i++) {
+			CalculateBoundingBoxMesh(go, i, first);
+		}
+		centerBox.SetVertices((boundingBox[0] + boundingBox[1]) / 2, (boundingBox[2] + boundingBox[3]) / 2, (boundingBox[4] + boundingBox[5]) / 2);
+	}
+	void CalculateBoundingBoxMesh(GameObject* go, int mesh, bool& onlyMesh) {
+		bool first; first = onlyMesh ? false : true;
+		for (int j = 0; j < go->meshes[mesh].faces.size(); j++) {
+			for (int k = 0; k < go->faces[go->meshes[mesh].faces[j]].count(); k++) {
+				Vertex3 point = go->vertexes[go->faces[go->meshes[mesh].faces[j]].v[k]];
 				if (!first) {
 					boundingBox[0] = point.GetX();
 					boundingBox[1] = point.GetX();
@@ -1030,6 +1124,7 @@ public:
 					boundingBox[4] = point.GetZ();
 					boundingBox[5] = point.GetZ();
 					first = true;
+					onlyMesh = true;
 				}
 				if (point.GetX() > boundingBox[0]) {
 					boundingBox[0] = point.GetX();
@@ -1051,82 +1146,250 @@ public:
 				}
 			}
 		}
-		//MoreMeshes
-		for (int i = 1; i <= hierarchical[mesh + 1][0]; i++) {
-			CalculateBoundingBoxHierarchical(matrix, hierarchical[mesh + 1][i] - 1, first);
-		}
-		//Transform
-		matrix.PopMatrix();
-	}
-
-	void MultVertices(TransformMatrix matrix) {
-		for (int i = 0; i < vertexes.size(); i++) {
-			vertexes[i] = matrix.MultVertex(vertexes[i]);
-		}
-	}
-	void MultVerticesMesh(TransformMatrix matrix, int mesh) {
-		vector<int> repeat;
-		for (int j = 0; j < meshes[mesh].faces.size(); j++) {
-			for (int k = 0; k < faces[meshes[mesh].faces[j]].count(); k++) {
-				int v = faces[meshes[mesh].faces[j]].v[k];
-				bool rep = false; for (int l = 0; l < repeat.size(); l++) { if (repeat[l] == v) rep = true; }
-				if (!rep) {
-					repeat.push_back(v);
-					vertexes[v] = matrix.MultVertex(vertexes[v]);
-				}
-			}
-		}
-	}
-
-	void Draw() {
-		if (visible) {
-			glPushMatrix();
-			glTranslated(position->GetX(), position->GetY(), position->GetZ());
-			glRotated(rotation->GetY(), 0, 1, 0);
-			glRotated(rotation->GetX(), 1, 0, 0);
-			glRotated(rotation->GetZ(), 0, 0, 1);
-			for (int i = 1; i <= hierarchical[0][0]; i++) {
-				DrawHierarchical(hierarchical[0][i]-1);
-			}
-			glPopMatrix();
-		}
-	}
-	void DrawHierarchical(int mesh) {
-		glPushMatrix();
-		glTranslated(meshes[mesh].position->GetX(), meshes[mesh].position->GetY(), meshes[mesh].position->GetZ());
-		glRotated(meshes[mesh].rotation->GetY(), 0, 1, 0);
-		glRotated(meshes[mesh].rotation->GetX(), 1, 0, 0);
-		glRotated(meshes[mesh].rotation->GetZ(), 0, 0, 1);
-		DrawMesh(mesh);
-		for (int i = 1; i <= hierarchical[mesh+1][0]; i++) {
-			DrawHierarchical(hierarchical[mesh+1][i]-1);
-		}
-		glPopMatrix();
-	}
-	void DrawMesh(int mesh) {
-		if (meshes[mesh].textura >= 0) { glEnable(GL_LIGHTING);  glEnable(GL_TEXTURE_2D); textura[meshes[mesh].textura].DisplayTexture(meshes[mesh].material >= 0); }
-		else { glDisable(GL_TEXTURE_2D); }
-		if (meshes[mesh].material >= 0) { glEnable(GL_LIGHTING); material[meshes[mesh].material].Set(); }
-
-		for (int j = 0; j < meshes[mesh].faces.size(); j++) {
-			glBegin(GL_POLYGON);
-			for (int k = 0; k < faces[meshes[mesh].faces[j]].count(); k++) {
-				glNormal3dv(vertexNormals[faces[meshes[mesh].faces[j]].vn[k]].GetVertices());
-				if (meshes[mesh].textura >= 0) glTexCoord2dv(vertexTexture[faces[meshes[mesh].faces[j]].vt[k]].GetVertices());
-				glVertex3dv(vertexes[faces[meshes[mesh].faces[j]].v[k]].GetVertices());
-			}
-			glEnd();
-		}
-	}	
-	
-	void Reset() {
-		//TODO - Delete Objects
-	}
-	void ResetMesh() {
-		//TODO - Delete Mesh from Objects
+		centerBox.SetVertices((boundingBox[0] + boundingBox[1]) / 2, (boundingBox[2] + boundingBox[3]) / 2, (boundingBox[4] + boundingBox[5]) / 2);
 	}
 };
 
+//Hierarchcal
+struct HierarchicalModel { //TODO
+	//Hierarchical Model
+	vector<vector<int>> hierarchical;
+
+	void RemoveChildHierarchical(int hijo, int padre) {
+		int hijosP = hierarchical[padre][0]; //Los hijos actuales de mi padre
+		for (int i = 1; i <= hijosP; i++) {
+			if (hierarchical[padre][i] == hijo) {
+				hierarchical[padre][i] = hierarchical[padre][hijosP];
+				hierarchical[padre].pop_back();
+				i--; hijosP--;
+				hierarchical[padre][0] = hijosP;
+			}
+		}
+	}
+	void AddChildHierarchical(int hijo, int padre) {
+		int hijosP = hierarchical[padre][0]; //Los hijos actuales de mi padre
+		hierarchical[padre].resize(hijosP + 2, 0); //Me agrego una casilla
+		hierarchical[padre][0] = hijosP + 1; //Ub hijo mas
+		hierarchical[padre][hijosP + 1] = hijo; //Soy yo
+	}
+
+	//TODO
+};
+
+//Camera
+struct CameraTool {
+private:
+	Vertex2 mousePosAnt;
+	bool Dim_3D_2D;
+	//PanTiltMove Tool	
+	Vertex2 rotCam;	float camZoom = 8; float MaxCamZomm = 8;
+	bool panTool = false, zoomTool = false, moveTool = false;
+	//Config Camera	
+	float params3D[3]; //FoV-Y, Near, Far
+	float params2D; //FoV-Y, Near, Far
+public:
+	Vertex3 CamaraCenter;
+	Vertex3 CamaraEye; //3D y 3D
+	bool ActivePanTilt = true;
+
+	CameraTool() {} 
+	void Init(float fovY, float nearZ, float farZ) { // 60, 0.1, 70
+		Dim_3D_2D = true;
+		params3D[0] = fovY;
+		params3D[1] = nearZ;
+		params3D[2] = farZ;
+		rotCam.SetVertices(90, 90);
+		CamaraCenter.SetVertices(0, 0, 0);
+		CamaraEye.SetVertices(0, 0, camZoom);
+	}
+	void Init(float height) {
+		Dim_3D_2D = false;
+		params2D = height;
+		rotCam.SetVertices(90, 90);
+		CamaraCenter.SetVertices(0, 0, 0);
+		CamaraEye.SetVertices(0, 0, camZoom);
+	}
+	
+	void SetPoint(Vertex3 center, Vertex3 eye, Vertex2 rot) {
+		CamaraCenter.SetVertices(center.GetX(), center.GetY(), center.GetZ());
+		CamaraEye.SetVertices(eye.GetX(), eye.GetY(), eye.GetZ());
+		rotCam.SetVertices(rot.GetX(), rot.GetY());
+		camZoom = Vertex3::Distance(center, eye);
+	}
+
+	void processSpecialKeys(int key, int x, int y) {
+
+	}
+	void keyboard(unsigned char key, int x, int y) {
+
+	}
+	void mouse(int btn, int state, int x, int y) {
+		if (state == GLUT_DOWN) {
+			mousePosAnt.SetVertices(x, y);
+			if (btn == GLUT_LEFT_BUTTON) {
+				panTool = !panTool;
+			}
+			else if (btn == GLUT_RIGHT_BUTTON) {
+				zoomTool = !zoomTool;
+			}
+			else if (btn == GLUT_MIDDLE_BUTTON) {
+				moveTool = !moveTool;
+			}
+		}
+	}
+	void mouse_idle(int x, int y) {
+		if (ActivePanTilt) {
+			if (Dim_3D_2D) {
+				PanTiltMove3D(Vertex2(x, y));
+			} else {
+				PanTiltMove2D(Vertex2(x, y));
+			}
+		}
+		mousePosAnt.SetVertices(x, y);
+	}
+
+	//Set
+	void Set() {
+		if (Dim_3D_2D) {
+			Set3D(0, 0, 1, 1);
+		}else {
+			Set2D(0, 0, 1, 1);
+		}
+	}
+	void Set(int X, int Y, int divX, int divY) {
+		if (Dim_3D_2D) {
+			Set3D(X, Y, divX, divY);
+		} else {
+			Set2D(X, Y, divX, divY);
+		}
+	}
+
+private:
+	//PanTiltMove
+	void PanTiltMove3D(Vertex2 mousePos) {
+		if (panTool) {
+			rotCam.SetVertices(rotCam.GetX() + (mousePos.GetX() - mousePosAnt.GetX()) / 3.0, rotCam.GetY() - (mousePos.GetY() - mousePosAnt.GetY()) / 3.0);
+		}
+		else if (zoomTool) {
+			camZoom += (mousePosAnt.GetX() - mousePos.GetX()) / 10.0;
+		}
+		else if (moveTool) {
+			TransformMatrix CamMat;
+			CamMat.Identity();
+			CamMat.Translated(CamaraCenter.GetX(), CamaraCenter.GetY(), CamaraCenter.GetZ());
+			CamMat.RotateY(-rotCam.GetX() + 90);
+			CamMat.RotateX(-rotCam.GetY());
+			Vertex3 Point(((mousePosAnt.GetX() - mousePos.GetX()) / 100.0), 0, ((mousePosAnt.GetY() - mousePos.GetY()) / 100.0));
+			CamaraCenter = CamMat.MultVertex(Point);
+		}
+		if (camZoom > MaxCamZomm) { camZoom = MaxCamZomm; }
+		if (camZoom < 0) { camZoom = 0; }
+		if (rotCam.GetX() > 360) { rotCam.SetX(360); }
+		if (rotCam.GetX() < 0) { rotCam.SetX(0); }
+		if (rotCam.GetY() > 360) { rotCam.SetY(360); }
+		if (rotCam.GetY() < 0) { rotCam.SetY(0); }
+
+		CamaraEye.SetX(CamaraCenter.GetX() + camZoom * sin(rotCam.GetY() * (M_PI / 180.0)) * cos(rotCam.GetX() * (M_PI / 180.0)));
+		CamaraEye.SetZ(CamaraCenter.GetZ() + camZoom * sin(rotCam.GetY() * (M_PI / 180.0)) * sin(rotCam.GetX() * (M_PI / 180.0)));
+		CamaraEye.SetY(CamaraCenter.GetY() + camZoom * cos(rotCam.GetY() * (M_PI / 180.0)));
+	}
+	void PanTiltMove2D(Vertex2 mousePos) {
+		if (zoomTool) {
+			params2D += (mousePosAnt.GetX() - mousePos.GetX()) / 10.0;
+		}
+		else if (moveTool) {
+			TransformMatrix CamMat;
+			CamMat.Identity();
+			CamMat.Translated(CamaraEye.GetX(), CamaraEye.GetY(), CamaraEye.GetZ());
+			Vertex3 Point(((mousePosAnt.GetX() - mousePos.GetX()) / 100.0), -((mousePosAnt.GetY() - mousePos.GetY()) / 100.0), 0);
+			CamaraEye = CamMat.MultVertex(Point);
+		}
+		if (camZoom > MaxCamZomm) { camZoom = MaxCamZomm; }
+		if (camZoom < 0) { camZoom = 0; }
+
+	}
+
+	//Set
+	void Set3D(int X, int Y, int divX, int divY) {
+		float w = glutGet(GLUT_WINDOW_WIDTH), h = glutGet(GLUT_WINDOW_HEIGHT);
+		int sizeX = (w / divX), sizeY = (h / divY);
+		int iniX = X * sizeX, iniY = Y * sizeY;
+		glViewport(iniX, iniY, (GLsizei)sizeX, (GLsizei)sizeY); //set the viewport size, based on fuction input 
+		glMatrixMode(GL_PROJECTION); glLoadIdentity(); //set the projection matrix set as identity	
+		//3D
+		gluPerspective(params3D[0], (GLfloat)sizeX / (GLfloat)sizeY, params3D[1], params3D[2]); //then set perspective projection parameters based on aspect ratio
+		glMatrixMode(GL_MODELVIEW); glLoadIdentity(); //set the model view matrix to identity
+		gluLookAt(CamaraEye.GetX(), CamaraEye.GetY(), CamaraEye.GetZ(), CamaraCenter.GetX(), CamaraCenter.GetY(), CamaraCenter.GetZ(), 0.0, 1.0, 0.0);
+		Light::SetAll(); //Para que no se peguen a mi camara
+	}
+	void Set2D(int X, int Y, int divX, int divY) {
+		float w = glutGet(GLUT_WINDOW_WIDTH), h = glutGet(GLUT_WINDOW_HEIGHT);
+		int sizeX = (w / divX), sizeY = (h / divY);
+		int iniX = X * sizeX, iniY = Y * sizeY;
+		glViewport(iniX, iniY, (GLsizei)sizeX, (GLsizei)sizeY); //set the viewport size, based on fuction input 
+		glMatrixMode(GL_PROJECTION); glLoadIdentity(); //set the projection matrix set as identity	
+		//2D 
+		float ww = params2D * ((GLfloat)sizeX / (GLfloat)sizeY);
+		gluOrtho2D(CamaraEye.GetX() - (ww / 2.0), CamaraEye.GetX() + (ww / 2.0), CamaraEye.GetY() - (params2D / 2.0), CamaraEye.GetY() + (params2D / 2.0));
+		Light::SetAll(); //Para que no se peguen a mi camara
+	}
+};
+
+//User Interface
+struct UserInterface {
+	//TODO
+};
+
+// Autonomus
+struct AutonomusMovement {
+	Vertex3* position;
+	Vertex3* rotation;
+	vector<Vertex3*> path;
+	int indexPath;
+	double recorrido;
+	double velRecorriddo;
+	double velocidad;
+	bool enablePath;
+
+	void AddPath(Vertex3* p) {
+		path.push_back(p);
+	}
+
+	void CalculoPathSig(int index) {
+		indexPath = index;
+		recorrido = 0;
+		position = path[indexPath];
+		Vertex3 diff = *path[(indexPath + 1) % path.size()] - *path[indexPath];
+		velRecorriddo = velocidad / diff.Magnitud();
+		double teta = atan2(diff.GetX(), diff.GetZ()) * (180.0 / M_PI);
+		double phi = atan2(sqrt(pow(diff.GetZ(), 2) + pow(diff.GetX(), 2)), diff.GetY()) * (180.0 / M_PI);
+		rotation->SetVertices(phi - 90, teta, 0);
+	}
+	void DisaplePathAutom() { enablePath = false; }
+	void EnablePathAutom(double vel) {
+		enablePath = true;
+		velocidad = vel;
+		CalculoPathSig(0);
+	}
+
+	void Draw() {
+		if (enablePath) {
+			*position = *path[indexPath] + (*path[(indexPath + 1) % path.size()] - *path[indexPath]) * recorrido;
+			recorrido += velRecorriddo;
+			if (recorrido >= 1) {
+				CalculoPathSig((indexPath + 1) % path.size());
+			}
+		}
+	}
+
+	//TODO
+};
+
+struct AutonomusMachine {
+
+};
+
+//Normals
 struct NormalsTool {
 public:
 	static void CalculateNormalsFace(GameObject* go) {
@@ -1279,7 +1542,7 @@ public:
 				ReadMaterial::readMaterial(go->material[m], mat, go->textura[t], tex, mtllib, aux);
 				if(!mat) go->material.resize(m);
 				if(!tex) go->textura.resize(t);
-				mesh = go->pushMesh(mat ? m : -1, tex ? t : -1, 0);
+				mesh = go->pushMesh(mat ? m : -1, tex ? t : -1);
 			}
 		}
 
@@ -1295,25 +1558,25 @@ public:
 		if (shp == Shape::Cube) {
 			MakeCube(go, mesh);
 			TransformMatrix mat; mat.Identity(); mat.Scale(width, height, depth);
-			go->MultVerticesMesh(mat, mesh);
+			mat.MultGameObjectMesh(go, mesh);
 			NormalsTool::CalculateNormalsFace(go);
 		}
 		if (shp == Shape::Icosaedro) {
 			MakeIcosaedro(go, mesh);
 			TransformMatrix mat; mat.Identity(); mat.Scale(width, height, depth);
-			go->MultVerticesMesh(mat, mesh);
+			mat.MultGameObjectMesh(go, mesh);
 			NormalsTool::CalculateNormalsFace(go);
 		}
 		if (shp == Shape::Sphere) {
 			MakeSphere(go, mesh, resolution);
 			TransformMatrix mat; mat.Identity(); mat.Scale(width, height, depth);
-			go->MultVerticesMesh(mat, mesh);
+			mat.MultGameObjectMesh(go, mesh);
 			NormalsTool::CalculateNormalsFace(go);
 		}
 		if (shp == Shape::Quad) {
 			MakeQuad(go, mesh);
 			TransformMatrix mat; mat.Identity(); mat.Scale(width, height, depth);
-			go->MultVerticesMesh(mat, mesh);
+			mat.MultGameObjectMesh(go, mesh);
 			NormalsTool::CalculateNormalsFace(go);
 		}
 	}
@@ -1325,8 +1588,11 @@ private:
 
 		go->setVertexes(new Vertex3[4]{ *(new Vertex3(-0.5, 0, -0.5)), *(new Vertex3(-0.5, 0, 0.5)),
 			*(new Vertex3(0.5, 0, 0.5)), *(new Vertex3(0.5, 0, -0.5)) }, 4);
-		Face *f;
-		f = new Face(); f->setV(new int[4]{ os + 0,os + 1,os + 2,os + 3 }, 4);
+		go->setVertexesTexture(new Vertex2[4]{ *(new Vertex2(0,0)), *(new Vertex2(1,0)) ,
+			*(new Vertex2(1,1)) , *(new Vertex2(0,1)) }, 4);
+		Face *f; f = new Face(); 
+		f->setV(new int[4]{ os + 0,os + 1,os + 2,os + 3 }, 4);
+		f->setVT(new int[4]{ ost + 0, ost + 1, ost + 2, ost + 3 }, 4);
 		go->pushFace(*f, mesh);
 	}
 	static void MakeCube(GameObject* go, int mesh) {
@@ -1711,107 +1977,3 @@ private:
 
 };
 
-// AI
-struct AutomaticMovement {
-	//TODO
-};
-
-/*Wrapper
-struct Wrapper {
-	vector<GameObject*> objetos;
-	vector<Light*> luces; vector<int> lucesPadre;
-	vector<vector<int>> conexiones;
-	Vertex3 position;
-	Vertex3 rotation;
-	vector<Vertex3> path;
-	int indexPath;
-	double recorrido;
-	double velRecorriddo;
-	double velocidad;
-	bool enablePath;
-
-	Wrapper() {
-		conexiones.resize(1);
-		conexiones[0].resize(1, 0);
-	}
-
-	void AddGameObject(GameObject* GO, int padre) {
-		int hijo = conexiones.size(); 
-		objetos.resize(hijo + 1); //Donde ira el objeto
-		lucesPadre.resize(hijo + 1, -1); //por si le ponemos luz
-		conexiones.resize(hijo + 1); //Le creamos su arbol genealogico
-		conexiones[hijo].resize(1, 0); //El nuevo tiene 0 hijos
-
-		int hijosP = conexiones[padre][0] + 1; //Los hijos actuales de mi padre
-		conexiones[padre].resize(hijosP + 1, 0); //Me agrego una casilla
-
-		conexiones[padre][0] = hijosP; //Ub hijo mas
-		conexiones[padre][hijosP] = hijo; //Soy yo
-		objetos[hijo] = GO; 
-	}
-	void AddLight(Light* luz, int padre) {
-		luces.push_back(luz);
-		lucesPadre[padre] = luces.size() - 1;
-	}
-
-	void AddPath(Vertex3 p) {
-		path.push_back(p);
-	}
-	void CalculoPathSig(int index) {
-		indexPath = index;
-		recorrido = 0;
-		position = path[indexPath];
-		Vertex3 diff = path[(indexPath + 1) % path.size()] - path[indexPath];
-		velRecorriddo = velocidad / diff.Magnitud();
-		double teta = atan2(diff.GetX(), diff.GetZ()) * (180.0 / M_PI);
-		double phi = atan2(sqrt(pow(diff.GetZ(), 2) + pow(diff.GetX(), 2)), diff.GetY()) * (180.0 / M_PI);
-		rotation.SetVertices(phi - 90, teta, 0);
-	}
-	void DisaplePathAutom() { enablePath = false; }
-	void EnablePathAutom(double vel) {
-		enablePath = true;
-		velocidad = vel;
-		CalculoPathSig(0);
-	}
-
-	void Draw() {
-		if (enablePath) {
-			position = path[indexPath] + (path[(indexPath + 1) % path.size()] - path[indexPath]) * recorrido;
-			recorrido += velRecorriddo;
-			if (recorrido >= 1) {
-				CalculoPathSig((indexPath + 1) % path.size());
-			}
-		}
-
-		glPushMatrix();
-		glTranslated(position.GetX(), position.GetY(), position.GetZ());
-		glRotated(rotation.GetY(), 0, 1, 0);
-		glRotated(rotation.GetX(), 1, 0, 0);
-		glRotated(rotation.GetZ(), 0, 0, 1);
-		DrawRecursive(0);
-		glPopMatrix();
-	}
-
-	void DrawRecursive(int id) {
-		if (lucesPadre[id] != -1) {
-			luces[lucesPadre[id]]->Set();
-		}
-		for (int i = 1; i <= conexiones[id][0]; i++) {
-			int hijo = conexiones[id][i];
-			glPushMatrix();
-			glTranslated(objetos[hijo]->position.GetX(), objetos[hijo]->position.GetY(), objetos[hijo]->position.GetZ());
-			glRotated(objetos[hijo]->rotation.GetY(), 0, 1, 0);
-			glRotated(objetos[hijo]->rotation.GetX(), 1, 0, 0);
-			glRotated(objetos[hijo]->rotation.GetZ(), 0, 0, 1);
-			objetos[hijo]->DrawOrigin();
-			DrawRecursive(hijo);
-			glPopMatrix();
-		}
-	}
-
-};
-
-
-struct Manager {
-	
-};*/
