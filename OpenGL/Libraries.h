@@ -844,6 +844,8 @@ public:
 };
 
 //TransformMatrix
+//Renglon * Columna
+//OpenGL usea Pre-Multiplication, yo uso Post
 struct TransformMatrix {
 private:
 	struct Matrix {
@@ -995,9 +997,14 @@ public:
 
 	void OnCollision(Vertex3 direction, Physics* other) { //Todo se conserva		
 		if (other == NULL) { //Velocity = Reflected Velocity if other physics == NULL
-			*velocity = (direction * (*velocity & direction) * 2) - *velocity;
+			double magnitud = velocity->Magnitud();
+			velocity->Unitario();
+			direction.Unitario();
+			*velocity = (direction * ((-*velocity) & direction) * 2) + *velocity;
+			*velocity = *velocity * magnitud;
+			*position = *position + *velocity * dt; //HACK
 		} else { //Si el otro tambien tiene phisicas
-
+			//TODO
 			// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
 			// V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
 		}
@@ -1033,18 +1040,17 @@ public:
 	Vertex3* rotation;
 	void (*OnCollision)(int id, BoundingBox* other, Vertex3 direction);
 	int localIdentifier;	
-	Vertex3 boundingBox[8];
-	Vertex3 normals[3];
+	vector<Vertex3> boundingBox;
+	vector<Vertex3> normals;
 	Vertex3 centerBox;
 
 	BoundingBox() {		
 		index = BoundingBoxes.size();
 		BoundingBoxes.push_back(this);
 		collisionDetection.resize(collisionDetection.size() + 1);
-		for (int i = 0; i < collisionDetection.size() - 1; i++) {
+		for (int i = 0; i < collisionDetection.size(); i++) {
 			collisionDetection[i].resize(i, 0);
 		}
-		this->OnCollision = OnCollision;
 	}
 	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, Physics* phy, int localIdentifier, void(*OnCollision)(int id, BoundingBox* other, Vertex3 direction)) {
 		colliderName = name;
@@ -1073,42 +1079,98 @@ public:
 		collisionDetection[seg][prim] = value? 1 : 0;
 	}
 	static void CheckCollisions() {
-		TransformMatrix matrix;
+		TransformMatrix matrixI, matrixJ;
 		for (int i = 0; i < collisionDetection.size(); i++) {
 			for (int j = 0; j < collisionDetection[i].size(); j++) {
 				if (collisionDetection[i][j] == 1) {					
 					//BoundingBoxes
 					//Itero las normales - Saco la normal de los dos bounding boxes
 					//Colapso los puntos - Si en alguna normal no interseccion colision = false;
+					//El centro del objeto es position + centerObj y Los puntos del noundin box son position + boundingBox
+
+					//Transform Points
+					matrixI.Identity();
+					matrixI.Translated(BoundingBoxes[i]->position->GetX(), BoundingBoxes[i]->position->GetY(), BoundingBoxes[i]->position->GetZ());
+					matrixI.RotateY(-BoundingBoxes[i]->rotation->GetY());
+					matrixI.RotateX(-BoundingBoxes[i]->rotation->GetX());
+					matrixI.RotateZ(-BoundingBoxes[i]->rotation->GetZ());
+					matrixJ.Identity();
+					matrixJ.Translated(BoundingBoxes[j]->position->GetX(), BoundingBoxes[j]->position->GetY(), BoundingBoxes[j]->position->GetZ());
+					matrixJ.RotateY(-BoundingBoxes[j]->rotation->GetY());
+					matrixJ.RotateX(-BoundingBoxes[j]->rotation->GetX());
+					matrixJ.RotateZ(-BoundingBoxes[j]->rotation->GetZ());
+
+					//SAT Normals Object I
 					bool colision = true;
-					matrix.Identity();
-					matrix.RotateY(BoundingBoxes[i]->rotation->GetY());
-					matrix.RotateX(BoundingBoxes[i]->rotation->GetX());
-					matrix.RotateZ(BoundingBoxes[i]->rotation->GetZ());
-					//Normal
-					for (int i = 0; i < 3; i++) {
-						//SAT()
-					}				
-					
+					for (int k = 0; k < BoundingBoxes[i]->normals.size(); k++) {
+						if (!colision) break;
+						if (!SAT(matrixI, BoundingBoxes[i]->centerBox, BoundingBoxes[i]->normals[k], BoundingBoxes[i]->boundingBox, matrixJ, BoundingBoxes[j]->boundingBox)) {
+							colision = false;
+						}
+					}
+					//SAT Normals Object J					
+					for (int k = 0; k < BoundingBoxes[j]->normals.size(); k++) {
+						if (!colision) break;
+						if (!SAT(matrixJ, BoundingBoxes[j]->centerBox, BoundingBoxes[j]->normals[k], BoundingBoxes[j]->boundingBox, matrixI, BoundingBoxes[i]->boundingBox)) {
+							colision = false;
+						}
+					}
 
 					//Si si Interseccion
 					if (colision) {
-						Vertex3 vectorI, vectorJ; //El vector entra en el objeto
+						Vertex3 vector, vectorI, vectorJ; //El vector entra en el objeto
 						//Si los dos tienen fisicas, Calculo el vector de colision es A- B y B - A
 						if (BoundingBoxes[i]->physiscs != NULL && BoundingBoxes[j]->physiscs != NULL) {
-							vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
-							vectorJ = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
-						} else {
-							//TODO calculate normal vector of colliding face
+							vector = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+							vectorI = vector;
+							vectorJ = -vector;
+						}
+						//If one doesnot have physics, Vector = Normal vector of colliding face
+						else {
+							int mayor = 0; double relacion = 0;
+							//Debo hacer el caulculo con las normales de I
+							if (BoundingBoxes[i]->physiscs == NULL) { 
+								vector = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
+								for (int k = 0; k < BoundingBoxes[i]->normals.size(); k++) {
+									double rel = matrixI.MultVector(BoundingBoxes[i]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
+									if (rel > relacion) {
+										mayor = k;
+										relacion = rel;
+									}
+								}
+								vector = matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);
+							}
+							//Hago el calculo con las normales de J
+							else { 
+								vector = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+								for (int k = 0; k < BoundingBoxes[j]->normals.size(); k++) {
+									double rel = matrixJ.MultVector(BoundingBoxes[j]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
+									if (rel > relacion) {
+										mayor = k;
+										relacion = rel;
+									}
+								}
+								vector = matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
+							}
+							vectorI = vector;
+							vectorJ = -vector;
 						}
 						vectorI.Unitario();
 						vectorJ.Unitario();
+
 						//Physics Collision
 						if (BoundingBoxes[i]->physiscs != NULL) BoundingBoxes[i]->physiscs->OnCollision(vectorI, BoundingBoxes[j]->physiscs);
 						if (BoundingBoxes[j]->physiscs != NULL) BoundingBoxes[j]->physiscs->OnCollision(vectorJ, BoundingBoxes[i]->physiscs);
+						
 						//Custom Collisions
-						if (BoundingBoxes[i]->OnCollision != NULL) BoundingBoxes[i]->OnCollision(BoundingBoxes[i]->localIdentifier, BoundingBoxes[j], vectorI);
-						if (BoundingBoxes[j]->OnCollision != NULL) BoundingBoxes[j]->OnCollision(BoundingBoxes[j]->localIdentifier, BoundingBoxes[i], vectorJ);
+						if (BoundingBoxes[i]->OnCollision != NULL) {
+							thread onCol(BoundingBoxes[i]->OnCollision, BoundingBoxes[i]->localIdentifier, BoundingBoxes[j], vectorI);
+							onCol.detach();
+						}
+						if (BoundingBoxes[j]->OnCollision != NULL) {
+							thread onCol(BoundingBoxes[j]->OnCollision, BoundingBoxes[j]->localIdentifier, BoundingBoxes[i], vectorJ);
+							onCol.detach();
+						}
 					}
 				}
 			}
@@ -1116,28 +1178,26 @@ public:
 	}
 
 	// Separating Axis Theorem
-	bool SAT(Vertex3 centerObj, Vertex3 normal, vector<Vertex3> puntosA, vector<Vertex3> puntosB) {
-		double minA = -DBL_MAX, maxA = -DBL_MAX;
-		double minB = -DBL_MAX, maxB = -DBL_MAX;
-		//(A)		
+	static bool SAT(TransformMatrix matrixA, Vertex3 centerObjA, Vertex3 normalA, vector<Vertex3> puntosA, TransformMatrix matrixB, vector<Vertex3> puntosB) {
+		double minA = DBL_MAX, maxA = -DBL_MAX;
+		double minB = DBL_MAX, maxB = -DBL_MAX;
+		//(A)
 		for (int i = 0; i < puntosA.size(); i++){
 			// GetReflected Vector on Axis
-			double dotVal = normal & (puntosA[i]- centerObj);
+			double dotVal = matrixA.MultVector(normalA) & (matrixA.MultVertex(puntosA[i]) - matrixA.MultVertex(centerObjA));
 			if (dotVal < minA) minA = dotVal;
 			if (dotVal > maxA) maxA = dotVal;
 		}
 		//(B)		
 		for (int i = 0; i < puntosB.size(); i++) {
 			// GetReflected Vector on Axis
-			double dotVal = normal & (puntosB[i] - centerObj);
+			double dotVal = matrixA.MultVector(normalA) & (matrixB.MultVertex(puntosB[i]) - matrixA.MultVertex(centerObjA));
 			if (dotVal < minB) minB = dotVal;
 			if (dotVal > maxB) maxB = dotVal;
-		}
+		}		
 		//Overlaps
-		return ((minB <= minA && minB <= maxA) || (minA <= minB && minA <= maxB));
+		return ((minA <= minB && minB <= maxA) || (minB <= minA && minA <= maxB));
 	}
-	
-	//TODO Colision
 
 private:
 	double BBvals[6] = { 0,0,0,0,0,0 }; //X+-, Y+-, Z+-
@@ -1188,18 +1248,20 @@ private:
 	}
 
 	void CreateBoundingBox() {
+		normals.clear();
+		boundingBox.clear();
 		centerBox.SetVertices((BBvals[0] + BBvals[1]) / 2, (BBvals[2] + BBvals[3]) / 2, (BBvals[4] + BBvals[5]) / 2);
-		normals[0].SetVertices(1, 0, 0);
-		normals[1].SetVertices(0, 1, 0);
-		normals[2].SetVertices(0, 0, 1);
-		boundingBox[0].SetVertices(BBvals[0], BBvals[2], BBvals[4]);
-		boundingBox[1].SetVertices(BBvals[0], BBvals[2], BBvals[5]);
-		boundingBox[2].SetVertices(BBvals[0], BBvals[3], BBvals[4]);
-		boundingBox[3].SetVertices(BBvals[0], BBvals[3], BBvals[5]);
-		boundingBox[4].SetVertices(BBvals[1], BBvals[2], BBvals[4]);
-		boundingBox[5].SetVertices(BBvals[1], BBvals[2], BBvals[5]);
-		boundingBox[6].SetVertices(BBvals[1], BBvals[3], BBvals[4]);
-		boundingBox[7].SetVertices(BBvals[1], BBvals[3], BBvals[5]);
+		normals.push_back(Vertex3(1, 0, 0));
+		normals.push_back(Vertex3(0, 1, 0));
+		normals.push_back(Vertex3(0, 0, 1));		
+		boundingBox.push_back(Vertex3(BBvals[0], BBvals[2], BBvals[4]));
+		boundingBox.push_back(Vertex3(BBvals[0], BBvals[2], BBvals[5]));
+		boundingBox.push_back(Vertex3(BBvals[0], BBvals[3], BBvals[4]));
+		boundingBox.push_back(Vertex3(BBvals[0], BBvals[3], BBvals[5]));
+		boundingBox.push_back(Vertex3(BBvals[1], BBvals[2], BBvals[4]));
+		boundingBox.push_back(Vertex3(BBvals[1], BBvals[2], BBvals[5]));
+		boundingBox.push_back(Vertex3(BBvals[1], BBvals[3], BBvals[4]));
+		boundingBox.push_back(Vertex3(BBvals[1], BBvals[3], BBvals[5]));
 	}
 };
 

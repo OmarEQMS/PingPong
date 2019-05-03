@@ -36,6 +36,10 @@ void Initialization() {
 	mesa.Init();
 	estadio.Init();
 	pelota.Init();
+
+	BoundingBox::AddCollisionDetection(pelota.box.index, mesa.box[0].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, jugador1.box.index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, jugador2.box.index, true);
 }
 
 void Reshape(int w, int h) {}

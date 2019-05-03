@@ -2,16 +2,14 @@
 //Todo debe tener Init y Update
 
 struct Jugador {
-private:
 	Vertex3* position;
 	Vertex3* rotation;
 	Vertex2 posMouse;
 	
+	CameraTool Camera;
 	GameObject raqueta;
 	BoundingBox box;
 	int index;
-public:
-	CameraTool Camera;
 
 	Jugador() {}
 	void Init(int i) {
@@ -60,14 +58,12 @@ public:
 };
 
 struct Marcador {
-private:
 	Vertex3* position;
 	Vertex3* rotation;
 
 	GameObject marcador;
 	Texture numeros[11];
 	int jugador1, jugador2;
-public:
 
 	Marcador() {}
 	void Init(){
@@ -133,15 +129,12 @@ public:
 };
 
 struct Estadio{
-private:
 	Vertex3* position;
 	Vertex3* rotation;
 
 	GameObject stadium;
 	GameObject boxGO;
 	BoundingBox box[6];
-
-public:
 
 	Estadio() {}
 
@@ -193,7 +186,6 @@ public:
 };
 
 struct MesaPing {
-private:
 	Vertex3* position;
 	Vertex3* rotation;
 
@@ -201,7 +193,6 @@ private:
 	GameObject boxGO;
 	BoundingBox box[2];
 
-public:
 	MesaPing() {}
 
 	void Init() {
@@ -234,15 +225,12 @@ public:
 };
 
 struct Pelota {
-private:
 	Vertex3* position;
 	Vertex3* rotation;
 
 	GameObject pelota;
 	BoundingBox box;
 	Physics phy;
-
-public:
 
 	void Init() {
 		//Pos and Rot
@@ -264,7 +252,7 @@ public:
 	}
 
 	static void OnCollision(int id, BoundingBox* other, Vertex3 direction){
-
+		cout << other->colliderName << endl;
 	}
 
 	void Update() {
