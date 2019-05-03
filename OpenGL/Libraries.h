@@ -110,6 +110,9 @@ public:
 	Vertex3 operator- (Vertex3 &vec) {
 		return Vertex3(GetX() - vec.GetX(), GetY() - vec.GetY(), GetZ() - vec.GetZ());
 	}
+	Vertex3 operator-() {
+		return Vertex3(-GetX(), -GetY(), -GetZ());
+	}
 	Vertex3 operator/ (double const &val) {
 		return Vertex3(GetX() / val, GetY() / val, GetZ() / val);
 	}
@@ -745,17 +748,17 @@ public:
 		index = GameObjects.size();
 		GameObjects.push_back(this);
 	}
-	void Init(string name) {
+	void Init() {
 		position = new Vertex3();
 		rotation = new Vertex3();
 		automatico = true;
 	}
-	void Init(string name, bool autom) {
+	void Init(bool autom) {
 		position = new Vertex3();
 		rotation = new Vertex3();
 		automatico = autom;
 	}
-	void Init(string name, Vertex3* pos, Vertex3* rot, bool autom) {
+	void Init(Vertex3* pos, Vertex3* rot, bool autom) {
 		position = pos;
 		rotation = rot;
 		automatico = autom;
@@ -992,8 +995,7 @@ public:
 
 	void OnCollision(Vertex3 direction, Physics* other) { //Todo se conserva		
 		if (other == NULL) { //Velocity = Reflected Velocity if other physics == NULL
-
-
+			*velocity = (direction * (*velocity & direction) * 2) - *velocity;
 		} else { //Si el otro tambien tiene phisicas
 
 			// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
@@ -1026,12 +1028,13 @@ public:
 public:
 	int index;
 	string colliderName;
-	double peso;
 	Physics* physiscs;
 	Vertex3* position;
 	Vertex3* rotation;
-	void (*OnCollision)(BoundingBox* other, Vertex3 direction);
-	double boundingBox[6] = { 0,0,0,0,0,0 }; //X+-, Y+-, Z+-
+	void (*OnCollision)(int id, BoundingBox* other, Vertex3 direction);
+	int localIdentifier;	
+	Vertex3 boundingBox[8];
+	Vertex3 normals[3];
 	Vertex3 centerBox;
 
 	BoundingBox() {		
@@ -1043,20 +1046,22 @@ public:
 		}
 		this->OnCollision = OnCollision;
 	}
-	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, Physics* phy, void(*OnCollision)(BoundingBox* other, Vertex3 direction)) {
+	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, Physics* phy, int localIdentifier, void(*OnCollision)(int id, BoundingBox* other, Vertex3 direction)) {
 		colliderName = name;
 		position = pos;
 		rotation = rot;
 		physiscs = phy;
 		this->OnCollision = OnCollision;
+		this->localIdentifier = localIdentifier;
 		CalculateBoundingBoxGameObject(go);
 	}
-	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, int mesh, Physics* phy, void(*OnCollision)(BoundingBox* other, Vertex3 direction)) {
+	void Init(string name, Vertex3* pos, Vertex3* rot, GameObject* go, int mesh, Physics* phy, int id, void(*OnCollision)(int id, BoundingBox* other, Vertex3 direction)) {
 		colliderName = name;
 		position = pos;
 		rotation = rot;
 		physiscs = phy;
 		this->OnCollision = OnCollision;
+		this->localIdentifier = localIdentifier;
 		bool meshB = true;
 		CalculateBoundingBoxMesh(go, mesh, meshB);
 	}
@@ -1071,13 +1076,22 @@ public:
 		TransformMatrix matrix;
 		for (int i = 0; i < collisionDetection.size(); i++) {
 			for (int j = 0; j < collisionDetection[i].size(); j++) {
-				if (collisionDetection[i][j] == 1) {
-					bool colision = true;
+				if (collisionDetection[i][j] == 1) {					
 					//BoundingBoxes
-					//Saco la normal de los dos bounding boxes
-					//Itero las normales
-					//Colapso los puntos
-					//Si en alguna normal no interseccion colision = false;
+					//Itero las normales - Saco la normal de los dos bounding boxes
+					//Colapso los puntos - Si en alguna normal no interseccion colision = false;
+					bool colision = true;
+					matrix.Identity();
+					matrix.RotateY(BoundingBoxes[i]->rotation->GetY());
+					matrix.RotateX(BoundingBoxes[i]->rotation->GetX());
+					matrix.RotateZ(BoundingBoxes[i]->rotation->GetZ());
+					//Normal
+					for (int i = 0; i < 3; i++) {
+						//SAT()
+					}				
+					
+
+					//Si si Interseccion
 					if (colision) {
 						Vertex3 vectorI, vectorJ; //El vector entra en el objeto
 						//Si los dos tienen fisicas, Calculo el vector de colision es A- B y B - A
@@ -1085,7 +1099,7 @@ public:
 							vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
 							vectorJ = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
 						} else {
-
+							//TODO calculate normal vector of colliding face
 						}
 						vectorI.Unitario();
 						vectorJ.Unitario();
@@ -1093,23 +1107,47 @@ public:
 						if (BoundingBoxes[i]->physiscs != NULL) BoundingBoxes[i]->physiscs->OnCollision(vectorI, BoundingBoxes[j]->physiscs);
 						if (BoundingBoxes[j]->physiscs != NULL) BoundingBoxes[j]->physiscs->OnCollision(vectorJ, BoundingBoxes[i]->physiscs);
 						//Custom Collisions
-						if (BoundingBoxes[i]->OnCollision != NULL) BoundingBoxes[i]->OnCollision(BoundingBoxes[j], vectorI);
-						if (BoundingBoxes[j]->OnCollision != NULL) BoundingBoxes[j]->OnCollision(BoundingBoxes[i], vectorJ);
+						if (BoundingBoxes[i]->OnCollision != NULL) BoundingBoxes[i]->OnCollision(BoundingBoxes[i]->localIdentifier, BoundingBoxes[j], vectorI);
+						if (BoundingBoxes[j]->OnCollision != NULL) BoundingBoxes[j]->OnCollision(BoundingBoxes[j]->localIdentifier, BoundingBoxes[i], vectorJ);
 					}
 				}
 			}
 		}
 	}
+
+	// Separating Axis Theorem
+	bool SAT(Vertex3 centerObj, Vertex3 normal, vector<Vertex3> puntosA, vector<Vertex3> puntosB) {
+		double minA = -DBL_MAX, maxA = -DBL_MAX;
+		double minB = -DBL_MAX, maxB = -DBL_MAX;
+		//(A)		
+		for (int i = 0; i < puntosA.size(); i++){
+			// GetReflected Vector on Axis
+			double dotVal = normal & (puntosA[i]- centerObj);
+			if (dotVal < minA) minA = dotVal;
+			if (dotVal > maxA) maxA = dotVal;
+		}
+		//(B)		
+		for (int i = 0; i < puntosB.size(); i++) {
+			// GetReflected Vector on Axis
+			double dotVal = normal & (puntosB[i] - centerObj);
+			if (dotVal < minB) minB = dotVal;
+			if (dotVal > maxB) maxB = dotVal;
+		}
+		//Overlaps
+		return ((minB <= minA && minB <= maxA) || (minA <= minB && minA <= maxB));
+	}
 	
 	//TODO Colision
 
 private:
+	double BBvals[6] = { 0,0,0,0,0,0 }; //X+-, Y+-, Z+-
+
 	void CalculateBoundingBoxGameObject(GameObject* go) {
 		bool first = false;
 		for (int i = 0; i < go->meshes.size(); i++) {
 			CalculateBoundingBoxMesh(go, i, first);
 		}
-		centerBox.SetVertices((boundingBox[0] + boundingBox[1]) / 2, (boundingBox[2] + boundingBox[3]) / 2, (boundingBox[4] + boundingBox[5]) / 2);
+		CreateBoundingBox();
 	}
 	void CalculateBoundingBoxMesh(GameObject* go, int mesh, bool& onlyMesh) {
 		bool first; first = onlyMesh ? false : true;
@@ -1117,36 +1155,51 @@ private:
 			for (int k = 0; k < go->faces[go->meshes[mesh].faces[j]].count(); k++) {
 				Vertex3 point = go->vertexes[go->faces[go->meshes[mesh].faces[j]].v[k]];
 				if (!first) {
-					boundingBox[0] = point.GetX();
-					boundingBox[1] = point.GetX();
-					boundingBox[2] = point.GetY();
-					boundingBox[3] = point.GetY();
-					boundingBox[4] = point.GetZ();
-					boundingBox[5] = point.GetZ();
+					BBvals[0] = point.GetX();
+					BBvals[1] = point.GetX();
+					BBvals[2] = point.GetY();
+					BBvals[3] = point.GetY();
+					BBvals[4] = point.GetZ();
+					BBvals[5] = point.GetZ();
 					first = true;
 					onlyMesh = true;
 				}
-				if (point.GetX() > boundingBox[0]) {
-					boundingBox[0] = point.GetX();
+				if (point.GetX() > BBvals[0]) {
+					BBvals[0] = point.GetX();
 				}
-				if (point.GetX() < boundingBox[1]) {
-					boundingBox[1] = point.GetX();
+				if (point.GetX() < BBvals[1]) {
+					BBvals[1] = point.GetX();
 				}
-				if (point.GetY() > boundingBox[2]) {
-					boundingBox[2] = point.GetY();
+				if (point.GetY() > BBvals[2]) {
+					BBvals[2] = point.GetY();
 				}
-				if (point.GetY() < boundingBox[3]) {
-					boundingBox[3] = point.GetY();
+				if (point.GetY() < BBvals[3]) {
+					BBvals[3] = point.GetY();
 				}
-				if (point.GetZ() > boundingBox[4]) {
-					boundingBox[4] = point.GetZ();
+				if (point.GetZ() > BBvals[4]) {
+					BBvals[4] = point.GetZ();
 				}
-				if (point.GetZ() < boundingBox[5]) {
-					boundingBox[5] = point.GetZ();
+				if (point.GetZ() < BBvals[5]) {
+					BBvals[5] = point.GetZ();
 				}
 			}
 		}
-		centerBox.SetVertices((boundingBox[0] + boundingBox[1]) / 2, (boundingBox[2] + boundingBox[3]) / 2, (boundingBox[4] + boundingBox[5]) / 2);
+		CreateBoundingBox();
+	}
+
+	void CreateBoundingBox() {
+		centerBox.SetVertices((BBvals[0] + BBvals[1]) / 2, (BBvals[2] + BBvals[3]) / 2, (BBvals[4] + BBvals[5]) / 2);
+		normals[0].SetVertices(1, 0, 0);
+		normals[1].SetVertices(0, 1, 0);
+		normals[2].SetVertices(0, 0, 1);
+		boundingBox[0].SetVertices(BBvals[0], BBvals[2], BBvals[4]);
+		boundingBox[1].SetVertices(BBvals[0], BBvals[2], BBvals[5]);
+		boundingBox[2].SetVertices(BBvals[0], BBvals[3], BBvals[4]);
+		boundingBox[3].SetVertices(BBvals[0], BBvals[3], BBvals[5]);
+		boundingBox[4].SetVertices(BBvals[1], BBvals[2], BBvals[4]);
+		boundingBox[5].SetVertices(BBvals[1], BBvals[2], BBvals[5]);
+		boundingBox[6].SetVertices(BBvals[1], BBvals[3], BBvals[4]);
+		boundingBox[7].SetVertices(BBvals[1], BBvals[3], BBvals[5]);
 	}
 };
 

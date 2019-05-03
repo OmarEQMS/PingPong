@@ -101,10 +101,10 @@ struct VirtualCamera {
 				if (closer >= 0) {
 					Vertex3 Point = CamaraEye + direccion * distance;					
 					Vertex3 Normal = objects[closer]->NormalAtPoint(Point);
-					Vertex3 SourceLightIn = lights[0]->GetPosition() - Point;  SourceLightIn.Unitario();
-					Vertex3 SourceLightOut = Point - lights[0]->GetPosition();  SourceLightOut.Unitario();
+					Vertex3 SourceLightOut = lights[0]->GetPosition() - Point;  SourceLightOut.Unitario();
+					Vertex3 SourceLightIn = Point - lights[0]->GetPosition();  SourceLightIn.Unitario();
 					Vertex3 Viewer = Point - CamaraEye; Viewer.Unitario();
-					Vertex3 Reflected = (Normal * (SourceLightOut & Normal) * 2) - SourceLightOut; //Reflected.Unitario();
+					Vertex3 Reflected = (Normal * (SourceLightIn & Normal) * 2) - SourceLightIn; //Reflected.Unitario();
 
 					//Direct Light?
 					bool directLight = true;
@@ -119,7 +119,7 @@ struct VirtualCamera {
 					//Ambient
 					Vertex3 amb = objects[closer]->material.GetAmbient() | lights[0]->GetAmbient();
 					//Diffuse
-					double lambert = SourceLightIn & Normal; if (lambert < 0 || !directLight) lambert = 0;
+					double lambert = SourceLightOut & Normal; if (lambert < 0 || !directLight) lambert = 0;
 					Vertex3 dif = (objects[closer]->material.GetDiffuse() | lights[0]->GetDiffuse()) * lambert;
 					//Specular					
 					double phong = Reflected & Viewer; if (phong < 0 || !directLight) phong = 0;
