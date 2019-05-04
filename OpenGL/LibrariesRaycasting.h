@@ -101,7 +101,7 @@ struct VirtualCamera {
 				if (closer >= 0) {
 					Vertex3 Point = CamaraEye + direccion * distance;					
 					Vertex3 Normal = objects[closer]->NormalAtPoint(Point);
-					Vertex3 SourceLightOut = lights[0]->GetPosition() - Point;  SourceLightOut.Unitario();
+					Vertex3 SourceLightOut = lights[0]->GetPosition() - Point;  SourceLightOut.Unitario(); //Segun yo van alrevez
 					Vertex3 SourceLightIn = Point - lights[0]->GetPosition();  SourceLightIn.Unitario();
 					Vertex3 Viewer = Point - CamaraEye; Viewer.Unitario();
 					Vertex3 Reflected = (Normal * (SourceLightIn & Normal) * 2) - SourceLightIn; //Reflected.Unitario();

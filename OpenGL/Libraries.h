@@ -690,6 +690,7 @@ public:
 };
 
 //Timer
+//https://www.fluentcpp.com/2018/12/28/timer-cpp/
 struct Timer {
 private:
 	bool clear = false;
@@ -721,12 +722,13 @@ public:
 	}
 };
 
-//INPUT
+//INPUT //TODO
 class Input {
-	//TODO
+	
 };
 
 //GameObject
+//TODO - Delete Objects and Meshez (Clean Vectors)
 struct  GameObject {
 public:
 	static vector<GameObject*> GameObjects;
@@ -836,16 +838,14 @@ public:
 	}
 	
 	void Reset() {
-		//TODO - Delete Objects
+		//Delete Objects
 	}
 	void ResetMesh() {
-		//TODO - Delete Mesh from Objects
+		//Delete Mesh from Objects
 	}
 };
 
 //TransformMatrix
-//Renglon * Columna
-//OpenGL usea Pre-Multiplication, yo uso Post
 struct TransformMatrix {
 private:
 	struct Matrix {
@@ -918,6 +918,8 @@ public:
 		}
 	}
 
+	//Matriz = Renglon * Columna
+	//OpenGL usea Pre-Multiplication, yo no se que uso, jejeje
 	void MulMatrix(Matrix mat) {
 		double result[4][4] = { { 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 },{ 0,0,0,0 } };
 		for (int i = 0; i < 4; i++) {
@@ -959,6 +961,7 @@ public:
 };
 
 //Physics
+//TODO Colision con dos objetos movibles
 struct Physics {
 public:
 	static vector<Physics*> Physicses;
@@ -983,30 +986,32 @@ public:
 		acceleration = new Vertex3();
 	}
 
-	//Impulso
-	//I = F dt
-	//F = m a
-	//I / m = a dt
-	//Colisiones elasticas, dos objetos movibles
-	// P = m v
-	// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
-	// V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
-	//Movimiento
-	//xt = xt - 1 + vt dt
-	//vt = vt - 1 + at dt
-	//atotal = at + aext + auser
+	/*
+	Impulso
+		I = F dt
+		F = m a
+		I / m = a dt
+	Colisiones elasticas, dos objetos movibles
+		P = m v
+		V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
+		V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
+	Movimiento
+		xt = xt - 1 + vt dt
+		vt = vt - 1 + at dt
+		atotal = at + aext + auser
+	*/
 
-	void OnCollision(Vertex3 direction, Physics* other) { //Todo se conserva		
+	void OnCollision(Vertex3 direction, Physics* other) { //Se conserva toda la energia		
 		if (other == NULL) { //Velocity = Reflected Velocity if other physics == NULL
 			double magnitud = velocity->Magnitud();
 			velocity->Unitario();
 			direction.Unitario();
 			*velocity = (direction * ((-*velocity) & direction) * 2) + *velocity;
 			*velocity = *velocity * magnitud;
-			*position = positionAnt; //HACK
+			//HACK
+			*position = positionAnt;
 			*position = *position + *velocity * dt;
 		} else { //Si el otro tambien tiene phisicas
-			//TODO
 			// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
 			// V2x = ((U1x * M1) + (U2x*M2) - (U2x - U1x)*M1) / (M1 + M2
 		}
@@ -1027,26 +1032,25 @@ public:
 		}
 	}
 
-	//TODO
 };
 
 //BoundingBox Collisions
-struct BoundingBox { //TODO
+struct BoundingBox {
 public:
 	static vector<BoundingBox*> BoundingBoxes;
 	static vector<vector<int>> collisionDetection;
-	static bool enabled;
 public:
 	int index;
 	string colliderName;
 	Physics* physiscs;
 	Vertex3* position;
 	Vertex3* rotation;
-	Vertex3 positionAnt;
 	void (*OnCollision)(int id, BoundingBox* other, Vertex3 direction);
 	int localIdentifier;	
-	vector<Vertex3> boundingBox;
-	vector<Vertex3> normals;
+	vector<Vertex3> boundingBox; //Para SAT
+	vector<Vertex3> normals; //Para Sat
+	vector<Vertex3> normalesPlane; //Para detectarCara
+	vector<Vertex3> puntosPlane; //Para detectarCara
 	Vertex3 centerBox;
 
 	BoundingBox() {		
@@ -1084,8 +1088,6 @@ public:
 		collisionDetection[seg][prim] = value? 1 : 0;
 	}
 	static void CheckCollisions() {
-		if (!enabled) return;
-
 		TransformMatrix matrixI, matrixJ;
 		for (int i = 0; i < collisionDetection.size(); i++) {
 			for (int j = 0; j < collisionDetection[i].size(); j++) {
@@ -1125,48 +1127,29 @@ public:
 
 					//Si si Interseccion
 					if (colision) {
-						Vertex3 vector, vectorI, vectorJ; //El vector entra en el objeto
+						Vertex3 vectorI, vectorJ; //El vector entra en el objeto
 						//Si los dos tienen fisicas, Calculo el vector de colision es A- B y B - A
 						if (BoundingBoxes[i]->physiscs != NULL && BoundingBoxes[j]->physiscs != NULL) {
-							vector = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
-							vectorI = vector;
-							vectorJ = -vector;
+							vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+							vectorJ = -vectorI;
 						}
 						//If one doesnot have physics, Vector = Normal vector of colliding face
 						else {
-							int mayor = 0; double relacion = 0;
+							int best = 0; double relacion = 0;
 							//Debo hacer el caulculo con las normales de I
 							if (BoundingBoxes[i]->physiscs == NULL) { 
-								vector = (BoundingBoxes[j]->positionAnt + BoundingBoxes[j]->centerBox) - (BoundingBoxes[i]->positionAnt + BoundingBoxes[i]->centerBox);
-								vector.Unitario();
-								for (int k = 0; k < BoundingBoxes[i]->normals.size(); k++) {
-									double rel = matrixI.MultVector(BoundingBoxes[i]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
-									if (abs(rel) > abs(relacion)) {
-										mayor = k;
-										relacion = rel;
-									}
-								}
-								if (relacion > 0) vector = matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);
-								else vector = -matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);								
+								vectorJ = BoxPlaneInterseccion(matrixI, BoundingBoxes[i]->centerBox, BoundingBoxes[i]->normalesPlane, BoundingBoxes[i]->puntosPlane, matrixJ, BoundingBoxes[j]->centerBox);
+								vectorI = -vectorJ;
 							}
 							//Hago el calculo con las normales de J
 							else { 
-								vector = (BoundingBoxes[i]->positionAnt + BoundingBoxes[i]->centerBox) - (BoundingBoxes[j]->positionAnt + BoundingBoxes[j]->centerBox);
-								vector.Unitario();
-								for (int k = 0; k < BoundingBoxes[j]->normals.size(); k++) {
-									double rel = matrixJ.MultVector(BoundingBoxes[j]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
-									if (rel > relacion) {
-										mayor = k;
-										relacion = rel;
-									}
-								}
-								if (relacion > 0) vector = matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
-								else vector = -matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
+								vectorI = BoxPlaneInterseccion(matrixJ, BoundingBoxes[j]->centerBox, BoundingBoxes[j]->normalesPlane, BoundingBoxes[j]->puntosPlane, matrixI, BoundingBoxes[i]->centerBox);
+								vectorJ = -vectorI;
 							}
-							cout << vector.GetX() << ", " << vector.GetY() << ", " << vector.GetZ() << endl;
-							vectorI = vector;
-							vectorJ = -vector;
+							cout << vectorI.GetX() << ", " << vectorI.GetY() << ", " << vectorI.GetZ() << endl;
 						}
+
+						//Make Sure is Unitary
 						vectorI.Unitario();
 						vectorJ.Unitario();
 
@@ -1186,8 +1169,6 @@ public:
 					}
 				}
 			}
-
-			BoundingBoxes[i]->positionAnt = *BoundingBoxes[i]->position;
 		}
 	}
 
@@ -1211,6 +1192,37 @@ public:
 		}		
 		//Overlaps
 		return ((minA <= minB && minB <= maxA) || (minB <= minA && minA <= maxB));
+	}
+
+	//BoxPlaneInterseccion
+	static Vertex3 BoxPlaneInterseccion(TransformMatrix matrix, Vertex3 centerObj, vector<Vertex3> normalesPlane, vector<Vertex3> puntosPlane, TransformMatrix matrixOther, Vertex3 centerObjOther) {
+		Vertex3 direction = matrix.MultVertex(centerObj) - matrixOther.MultVertex(centerObjOther); direction.Unitario(); //La direccion debe de ir de el otro objeto al bounding box;
+		Vertex3 point = matrixOther.MultVertex(centerObjOther);
+		int close = 0; double masCerca = DBL_MAX;
+		for (int k = 0; k < normalesPlane.size(); k++) {
+			double cerca = PlaneIntersection(point, direction, matrix.MultVector(normalesPlane[k]), matrix.MultVertex(puntosPlane[k])); //Quen tan comun son la normal contra mi vector de collision cos(0);
+			if (abs(cerca) < abs(masCerca)) {
+				close = k;
+				masCerca = cerca;
+			}
+		}
+		return matrix.MultVector(normalesPlane[close]);
+	}
+
+	//Plane Intersection
+	static double PlaneIntersection(Vertex3 point, Vertex3 direction, Vertex3 normalPlane, Vertex3 pointPlane) {
+		//PlaneEq = P*n – A*n = 0  (P and A points in plane)
+		//Ray = P + dir * t
+		//Substitus: ( P + dir * t ) * n = A * n
+		//solve for t: T = ( A * n - P * n ) / ( dir * n)
+		double t;
+		double dirxn = direction & normalPlane;
+		if (dirxn == 0) {
+			t = DBL_MAX;
+		} else {
+			t = ((pointPlane & normalPlane) - (point & normalPlane)) / dirxn;
+		}
+		return t;
 	}
 
 private:
@@ -1265,6 +1277,7 @@ private:
 		normals.clear();
 		boundingBox.clear();
 		centerBox.SetVertices((BBvals[0] + BBvals[1]) / 2, (BBvals[2] + BBvals[3]) / 2, (BBvals[4] + BBvals[5]) / 2);
+		//ParaSAT
 		normals.push_back(Vertex3(1, 0, 0));
 		normals.push_back(Vertex3(0, 1, 0));
 		normals.push_back(Vertex3(0, 0, 1));		
@@ -1276,11 +1289,24 @@ private:
 		boundingBox.push_back(Vertex3(BBvals[1], BBvals[2], BBvals[5]));
 		boundingBox.push_back(Vertex3(BBvals[1], BBvals[3], BBvals[4]));
 		boundingBox.push_back(Vertex3(BBvals[1], BBvals[3], BBvals[5]));
+		//ParaCARA
+		normalesPlane.push_back(Vertex3(1, 0, 0));
+		normalesPlane.push_back(Vertex3(0, 1, 0));
+		normalesPlane.push_back(Vertex3(0, 0, 1));
+		normalesPlane.push_back(Vertex3(-1, 0, 0));
+		normalesPlane.push_back(Vertex3(0, -1, 0));
+		normalesPlane.push_back(Vertex3(0, 0, -1));
+		puntosPlane.push_back(boundingBox[0]);
+		puntosPlane.push_back(boundingBox[0]);
+		puntosPlane.push_back(boundingBox[0]);
+		puntosPlane.push_back(boundingBox[7]);
+		puntosPlane.push_back(boundingBox[7]);
+		puntosPlane.push_back(boundingBox[7]);
 	}
 };
 
-//Hierarchcal
-struct HierarchicalModel { //TODO
+//Hierarchcal //TODO
+struct HierarchicalModel {
 	//Hierarchical Model
 	vector<vector<int>> hierarchical;
 
@@ -1302,7 +1328,6 @@ struct HierarchicalModel { //TODO
 		hierarchical[padre][hijosP + 1] = hijo; //Soy yo
 	}
 
-	//TODO
 };
 
 //Camera
@@ -1464,12 +1489,12 @@ private:
 	}
 };
 
-//User Interface
+//User Interface //TODO
 struct UserInterface {
-	//TODO
+
 };
 
-// Autonomus
+// Autonomus //TODO
 struct AutonomusMovement {
 	Vertex3* position;
 	Vertex3* rotation;
@@ -1511,14 +1536,63 @@ struct AutonomusMovement {
 		}
 	}
 
-	//TODO
 };
 
+//Autonomus Movement //TODO
 struct AutonomusMachine {
+	float aTorso, aHead, aShoulderR, aElbowR, aWristR, aShoulderL, aElbowL, aWristL;
+	float *position; 
 
+	int actBaile, posCount; float trans;
+	float ***bailes; int *cantPos;
+	bool enabled;
+
+	AutonomusMachine() {
+		position = new float[3]{ 0,0,0 };		
+		//Bailes
+		cantPos = new int[1]{ 10 };
+		bailes = new float**[1];
+		bailes[0] = new float*[10];
+		bailes[0][0] = new float[8]{ 5, 0, 0, 0, 0, 0, 0, 0 };
+		bailes[0][1] = new float[8]{ -5, 0, 0, 0, 0, -95, 0, 0 };
+		bailes[0][2] = new float[8]{ 5, 0, 90, 0, 0, -95, 0, 0 };
+		bailes[0][3] = new float[8]{ -5, 0, 90, 0, 0, -90, 95, 0 };
+		bailes[0][4] = new float[8]{ 5, 0, 90, -80, 0, -90, 95, 0 };
+		bailes[0][5] = new float[8]{ -5, 0, 90, -80, 0, -10, 95, 0 };
+		bailes[0][6] = new float[8]{ 5, 0, 0, -80, 0, -10, 95, 0 };
+		bailes[0][7] = new float[8]{ -5, 0, 0, -80, 65, -10, 95, -80 };
+		bailes[0][8] = new float[8]{ 5, 0, 0, -80, 65, -10, 0, -80 };
+		bailes[0][9] = new float[8]{ -5, 0, 0, 5, 65, -10, 0, -80 };
+	}
+
+	void Draw() {
+		if (enabled) {
+			UpdateParamsGameObject(bailes[actBaile - 1], posCount, cantPos[actBaile - 1], trans);
+			//DRAW GameObject
+			trans += 0.05;
+			if (trans > 1) { trans = 0; posCount++; }
+			if (posCount >= cantPos[actBaile - 1]) { posCount = 0; }
+		}
+	}
+
+	void UpdateParamsGameObject(float **posicion, int sigPos, int totPos, float trans) { //trans va de 0 a 1
+		aTorso = posicion[(sigPos - 1 + totPos) % totPos][0] + trans*(posicion[sigPos][0] - posicion[(sigPos - 1 + totPos) % totPos][0]);
+		aHead = posicion[(sigPos - 1 + totPos) % totPos][1] + trans*(posicion[sigPos][1] - posicion[(sigPos - 1 + totPos) % totPos][1]);
+		aShoulderR = posicion[(sigPos - 1 + totPos) % totPos][2] + trans*(posicion[sigPos][2] - posicion[(sigPos - 1 + totPos) % totPos][2]);
+		aElbowR = posicion[(sigPos - 1 + totPos) % totPos][3] + trans*(posicion[sigPos][3] - posicion[(sigPos - 1 + totPos) % totPos][3]);
+		aWristR = posicion[(sigPos - 1 + totPos) % totPos][4] + trans*(posicion[sigPos][4] - posicion[(sigPos - 1 + totPos) % totPos][4]);
+		aShoulderL = posicion[(sigPos - 1 + totPos) % totPos][5] + trans*(posicion[sigPos][5] - posicion[(sigPos - 1 + totPos) % totPos][5]);
+		aElbowL = posicion[(sigPos - 1 + totPos) % totPos][6] + trans*(posicion[sigPos][6] - posicion[(sigPos - 1 + totPos) % totPos][6]);
+		aWristL = posicion[(sigPos - 1 + totPos) % totPos][7] + trans*(posicion[sigPos][7] - posicion[(sigPos - 1 + totPos) % totPos][7]);
+	}
+
+	void PrintPositions() {
+		cout << "{ " << aTorso << ", " << aHead << ", " << aShoulderR << ", " << aElbowR << ", " << aWristR << ", " << aShoulderL << ", " << aElbowL << ", " << aWristL << "}" << endl;
+	}
 };
 
 //Normals
+//TODO Normal for each Vertex, more smooth
 struct NormalsTool {
 public:
 	static void CalculateNormalsFace(GameObject* go) {
@@ -1532,6 +1606,7 @@ public:
 			}
 		}
 	}
+
 	/*static void CalculateNormalsVertex(GameObject* go) { //Debo buscar todas las caras que utilicen el mismo vetexes
 	int cantCarasInVert;
 	vector<Vertex3> newVetexNormals; //Una normal por vector
@@ -1554,6 +1629,7 @@ public:
 	go->vertexNormals.push_back(newVetexNormals[i]);
 	}
 	}*/
+
 	static void CalculateNormalOneFace(GameObject* go, int face) {
 		Vertex3 normal = CalculateNormal(go->vertexes[go->faces[face].v[0]], go->vertexes[go->faces[face].v[1]], go->vertexes[go->faces[face].v[2]]);
 		go->vertexNormals.push_back(normal);
@@ -1680,9 +1756,9 @@ public:
 };
 
 //MyShapes
+//TODO option to make texture
 struct BasicShapesTool {
 public:
-	//TODO option to make texture
 	static void MakeShape(GameObject* go, int mesh, Shape shp, double width, double height, double depth, int resolution) {
 		if (shp == Shape::Cube) {
 			MakeCube(go, mesh);
@@ -1818,9 +1894,9 @@ private:
 };
 
 //Revolusion
+//TODO Option to make texture
 struct SolidRevolutionTool {
 public: 
-	//TODO Option to make texture
 	static void MakeSolid(GameObject* go, int mesh, Vertex3 eje, Vertex3 point, int* vertProfile, int nVert, int resolution, bool doble) {
 		TransformMatrix mat;
 		mat.Identity();

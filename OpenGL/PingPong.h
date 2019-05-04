@@ -42,12 +42,12 @@ struct Jugador {
 		position->SetVertices(posMouse.GetX(), 0.35 + posMouse.GetY(), index*1.2);
 	}
 	void KesysRot(bool PitchMas, bool PitchMenos, bool RollMas, bool RollMenos, bool YawMas, bool YawMenos) {
-		if (PitchMas) rotation->SetX(rotation->GetX() + 1);
-		if (PitchMenos) rotation->SetX(rotation->GetX() - 1);
-		if (YawMas) rotation->SetY(rotation->GetY() + 1);
-		if (YawMenos) rotation->SetY(rotation->GetY() - 1);
-		if (RollMas) rotation->SetZ(rotation->GetZ() + 1 * index);
-		if (RollMenos) rotation->SetZ(rotation->GetZ() - 1 * index);
+		if (PitchMas) rotation->SetX(rotation->GetX() + 10);
+		if (PitchMenos) rotation->SetX(rotation->GetX() - 10);
+		if (YawMas) rotation->SetY(rotation->GetY() + 2);
+		if (YawMenos) rotation->SetY(rotation->GetY() - 2);
+		if (RollMas) rotation->SetZ(rotation->GetZ() + 10 * index);
+		if (RollMenos) rotation->SetZ(rotation->GetZ() - 10 * index);
 	}
 	
 	void Reshape() {

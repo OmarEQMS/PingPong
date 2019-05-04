@@ -12,8 +12,10 @@ vector<BoundingBox*> BoundingBox::BoundingBoxes;
 vector<vector<int>> BoundingBox::collisionDetection;
 vector<Physics*> Physics::Physicses;
 Vertex3 Physics::globalAcceleration(0, -9.81, 0);
-bool BoundingBox::enabled = false; //10ms
 double Physics::dt = 0.001; //10ms
+
+//Timer
+Timer t = Timer();
 
 //Objetos en escena
 Light luz1(GL_LIGHT1, true);
@@ -47,7 +49,6 @@ void Initialization() {
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[3].index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[4].index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[5].index, true);
-	BoundingBox::enabled = true;
 }
 
 void Reshape(int w, int h) {}
@@ -89,7 +90,7 @@ void keyboard(unsigned char key, int x, int y) {
 	jugador2.Camera.keyboard(key, x, y);
 	//Marcados
 	switch (key) {
-	case 27: exit(0); break;
+	case 27: t.stop(); exit(0); break;
 	case 'U': case 'u': marcador.IncJ1(); break;
 	case 'I': case 'i': marcador.DecJ1(); break;
 	case 'O': case 'o': marcador.IncJ2(); break;
@@ -153,8 +154,7 @@ int main(int argc, char** argv) {
 	//Initialization	
 	Initialization();
 
-	//Timer
-	Timer t = Timer();
+	//Timer	
 	t.setInterval(collisionsANDphysics, Physics::dt*1000*10);
 
 	//Do main loop
