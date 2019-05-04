@@ -967,6 +967,7 @@ public:
 public:
 	int index;
 	Vertex3* position;
+	Vertex3 positionAnt;
 	Vertex3* velocity;
 	Vertex3* acceleration;
 	double masa;
@@ -1002,7 +1003,8 @@ public:
 			direction.Unitario();
 			*velocity = (direction * ((-*velocity) & direction) * 2) + *velocity;
 			*velocity = *velocity * magnitud;
-			*position = *position + *velocity * dt; //HACK
+			*position = positionAnt; //HACK
+			*position = *position + *velocity * dt;
 		} else { //Si el otro tambien tiene phisicas
 			//TODO
 			// V1x = ((U1x * M1) + (U2x*M2) - (U1x-U2x)*M2) / (M1 + M2)
@@ -1017,6 +1019,7 @@ public:
 
 	static void UpdatePhysics() {
 		for (int i = 0; i < Physicses.size(); i++) {
+			Physicses[i]->positionAnt = *Physicses[i]->position;
 			*Physicses[i]->acceleration = *Physicses[i]->acceleration + globalAcceleration;
 			*Physicses[i]->velocity = *Physicses[i]->velocity + *Physicses[i]->acceleration * dt;
 			*Physicses[i]->position = *Physicses[i]->position + *Physicses[i]->velocity * dt;	
@@ -1133,12 +1136,13 @@ public:
 								vector = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
 								for (int k = 0; k < BoundingBoxes[i]->normals.size(); k++) {
 									double rel = matrixI.MultVector(BoundingBoxes[i]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
-									if (rel > relacion) {
+									if (abs(rel) > abs(relacion)) {
 										mayor = k;
 										relacion = rel;
 									}
 								}
-								vector = matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);
+								if (relacion > 0) vector = matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);
+								else vector = -matrixI.MultVector(BoundingBoxes[i]->normals[mayor]);								
 							}
 							//Hago el calculo con las normales de J
 							else { 
@@ -1150,8 +1154,10 @@ public:
 										relacion = rel;
 									}
 								}
-								vector = matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
+								if (relacion > 0) vector = matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
+								else vector = -matrixJ.MultVector(BoundingBoxes[j]->normals[mayor]);
 							}
+							cout << vector.GetX() << ", " << vector.GetY() << ", " << vector.GetZ() << endl;
 							vectorI = vector;
 							vectorJ = -vector;
 						}

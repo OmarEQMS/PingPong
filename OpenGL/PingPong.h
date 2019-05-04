@@ -41,9 +41,11 @@ struct Jugador {
 		if (posMouse.GetY() > 0.5) posMouse.SetY(0.5);
 		position->SetVertices(posMouse.GetX(), 0.35 + posMouse.GetY(), index*1.2);
 	}
-	void KesysRot(bool PitchMas, bool PitchMenos, bool RollMas, bool RollMenos) {
+	void KesysRot(bool PitchMas, bool PitchMenos, bool RollMas, bool RollMenos, bool YawMas, bool YawMenos) {
 		if (PitchMas) rotation->SetX(rotation->GetX() + 1);
 		if (PitchMenos) rotation->SetX(rotation->GetX() - 1);
+		if (YawMas) rotation->SetY(rotation->GetY() + 1);
+		if (YawMenos) rotation->SetY(rotation->GetY() - 1);
 		if (RollMas) rotation->SetZ(rotation->GetZ() + 1 * index);
 		if (RollMenos) rotation->SetZ(rotation->GetZ() - 1 * index);
 	}
@@ -234,7 +236,7 @@ struct Pelota {
 
 	void Init() {
 		//Pos and Rot
-		position = new Vertex3(0, 0.75, 0);
+		position = new Vertex3(0, 0.8, 0);
 		rotation = new Vertex3(0, 0, 0);
 		//pelotita	
 		pelota.Init(position, rotation, true);
@@ -247,6 +249,7 @@ struct Pelota {
 		pelota.material[m].Shinnes(128);
 		//Physics
 		phy.Init(position, 1);
+		phy.AddImpulse(Vertex3(0, 0, -1500));
 		//Bounding Box
 		box.Init("ball", position, rotation, &pelota, &phy, 0, OnCollision);
 	}

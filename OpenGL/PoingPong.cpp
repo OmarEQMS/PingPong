@@ -12,7 +12,7 @@ vector<BoundingBox*> BoundingBox::BoundingBoxes;
 vector<vector<int>> BoundingBox::collisionDetection;
 vector<Physics*> Physics::Physicses;
 Vertex3 Physics::globalAcceleration(0, -9.81, 0);
-double Physics::dt = 0.01; //10ms
+double Physics::dt = 0.001; //10ms
 
 //Objetos en escena
 Light luz1(GL_LIGHT1, true);
@@ -40,6 +40,12 @@ void Initialization() {
 	BoundingBox::AddCollisionDetection(pelota.box.index, mesa.box[0].index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, jugador1.box.index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, jugador2.box.index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[0].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[1].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[2].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[3].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[4].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[5].index, true);
 }
 
 void Reshape(int w, int h) {}
@@ -74,8 +80,8 @@ void Idle(void) {
 void keyboard(unsigned char key, int x, int y) { 
 	//Keys Jugadores
 	jugador1.Kesys((key == 'W' || key == 'w'), (key == 'S' || key == 's'), (key == 'A' || key == 'a'), (key == 'D' || key == 'd'));
-	jugador1.KesysRot((key == 'Z' || key == 'z'), (key == 'X' || key == 'x'), (key == 'Q' || key == 'q'), (key == 'E' || key == 'e'));
-	jugador2.KesysRot((key == '4'), (key == '5'), (key == '1'), (key == '2'));
+	jugador1.KesysRot((key == 'Z' || key == 'z'), (key == 'X' || key == 'x'), (key == 'Q' || key == 'q'), (key == 'E' || key == 'e'), (key == 'R' || key == 'r'), (key == 'F' || key == 'f'));
+	jugador2.KesysRot((key == '4'), (key == '5'), (key == '1'), (key == '2'), (key == '7'), (key == '8'));
 	//Cameras
 	jugador1.Camera.keyboard(key, x, y);
 	jugador2.Camera.keyboard(key, x, y);
