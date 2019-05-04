@@ -1035,12 +1035,14 @@ struct BoundingBox { //TODO
 public:
 	static vector<BoundingBox*> BoundingBoxes;
 	static vector<vector<int>> collisionDetection;
+	static bool enabled;
 public:
 	int index;
 	string colliderName;
 	Physics* physiscs;
 	Vertex3* position;
 	Vertex3* rotation;
+	Vertex3 positionAnt;
 	void (*OnCollision)(int id, BoundingBox* other, Vertex3 direction);
 	int localIdentifier;	
 	vector<Vertex3> boundingBox;
@@ -1082,6 +1084,8 @@ public:
 		collisionDetection[seg][prim] = value? 1 : 0;
 	}
 	static void CheckCollisions() {
+		if (!enabled) return;
+
 		TransformMatrix matrixI, matrixJ;
 		for (int i = 0; i < collisionDetection.size(); i++) {
 			for (int j = 0; j < collisionDetection[i].size(); j++) {
@@ -1133,7 +1137,8 @@ public:
 							int mayor = 0; double relacion = 0;
 							//Debo hacer el caulculo con las normales de I
 							if (BoundingBoxes[i]->physiscs == NULL) { 
-								vector = (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox) - (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox);
+								vector = (BoundingBoxes[j]->positionAnt + BoundingBoxes[j]->centerBox) - (BoundingBoxes[i]->positionAnt + BoundingBoxes[i]->centerBox);
+								vector.Unitario();
 								for (int k = 0; k < BoundingBoxes[i]->normals.size(); k++) {
 									double rel = matrixI.MultVector(BoundingBoxes[i]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
 									if (abs(rel) > abs(relacion)) {
@@ -1146,7 +1151,8 @@ public:
 							}
 							//Hago el calculo con las normales de J
 							else { 
-								vector = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+								vector = (BoundingBoxes[i]->positionAnt + BoundingBoxes[i]->centerBox) - (BoundingBoxes[j]->positionAnt + BoundingBoxes[j]->centerBox);
+								vector.Unitario();
 								for (int k = 0; k < BoundingBoxes[j]->normals.size(); k++) {
 									double rel = matrixJ.MultVector(BoundingBoxes[j]->normals[k]) & vector; //Quen tan comun son la normal contra mi vector de collision cos(0);
 									if (rel > relacion) {
@@ -1180,6 +1186,8 @@ public:
 					}
 				}
 			}
+
+			BoundingBoxes[i]->positionAnt = *BoundingBoxes[i]->position;
 		}
 	}
 

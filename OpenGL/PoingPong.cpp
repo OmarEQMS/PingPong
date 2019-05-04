@@ -12,6 +12,7 @@ vector<BoundingBox*> BoundingBox::BoundingBoxes;
 vector<vector<int>> BoundingBox::collisionDetection;
 vector<Physics*> Physics::Physicses;
 Vertex3 Physics::globalAcceleration(0, -9.81, 0);
+bool BoundingBox::enabled = false; //10ms
 double Physics::dt = 0.001; //10ms
 
 //Objetos en escena
@@ -37,7 +38,7 @@ void Initialization() {
 	estadio.Init();
 	pelota.Init();
 
-	BoundingBox::AddCollisionDetection(pelota.box.index, mesa.box[0].index, true);
+	BoundingBox::AddCollisionDetection(pelota.box.index, mesa.box.index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, jugador1.box.index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, jugador2.box.index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[0].index, true);
@@ -46,6 +47,7 @@ void Initialization() {
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[3].index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[4].index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, estadio.box[5].index, true);
+	BoundingBox::enabled = true;
 }
 
 void Reshape(int w, int h) {}

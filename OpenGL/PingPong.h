@@ -193,7 +193,7 @@ struct MesaPing {
 
 	GameObject mesaPing;
 	GameObject boxGO;
-	BoundingBox box[2];
+	BoundingBox box;
 
 	MesaPing() {}
 
@@ -217,7 +217,7 @@ struct MesaPing {
 		matrix.Identity(); matrix.Translated(0, 0.548, 0);
 		matrix.MultGameObjectMesh(&boxGO, 1);
 		//Boxes
-		box[0].Init("mesa", position, rotation, &boxGO, 0, NULL, 0, NULL);
+		box.Init("mesa", position, rotation, &boxGO, 0, NULL, 0, NULL);
 		//box[1].Init("mesa", position, rotation, &boxGO, 1, NULL, 1, OnCollision); TODO
 	}
 
