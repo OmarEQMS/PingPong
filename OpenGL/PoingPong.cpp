@@ -3,7 +3,7 @@
 #include "Libraries.h"
 #include "PingPong.h"
 #include "LibrariesRaycasting.h"
-
+//Static Librarias
 Vertex2 Vertex2::zero;
 Vertex3 Vertex3::zero;
 vector<Light*> Light::luces;
@@ -13,6 +13,8 @@ vector<vector<int>> BoundingBox::collisionDetection;
 vector<Physics*> Physics::Physicses;
 Vertex3 Physics::globalAcceleration(0, -9.81, 0);
 double Physics::dt = 0.001; //10ms
+//Static Specific Classes
+vector<Pelota*> Pelota::pelotas;
 
 //Timer
 Timer t = Timer();
@@ -83,8 +85,8 @@ void Idle(void) {
 void keyboard(unsigned char key, int x, int y) { 
 	//Keys Jugadores
 	jugador1.Kesys((key == 'W' || key == 'w'), (key == 'S' || key == 's'), (key == 'A' || key == 'a'), (key == 'D' || key == 'd'));
-	jugador1.KesysRot((key == 'Z' || key == 'z'), (key == 'X' || key == 'x'), (key == 'Q' || key == 'q'), (key == 'E' || key == 'e'), (key == 'R' || key == 'r'), (key == 'F' || key == 'f'));
-	jugador2.KesysRot((key == '4'), (key == '5'), (key == '1'), (key == '2'), (key == '7'), (key == '8'));
+	jugador1.KesysRot((key == 'F' || key == 'f'), (key == 'R' || key == 'r'), (key == 'Q' || key == 'q'), (key == 'E' || key == 'e'), (key == 'Z' || key == 'z'), (key == 'X' || key == 'x'));
+	jugador2.KesysRot((key == '6'), (key == '3'), (key == '2'), (key == '1'), (key == '4'), (key == '5'));
 	//Cameras
 	jugador1.Camera.keyboard(key, x, y);
 	jugador2.Camera.keyboard(key, x, y);

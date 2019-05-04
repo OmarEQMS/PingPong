@@ -1018,7 +1018,7 @@ public:
 	}
 
 	void AddImpulse(Vertex3 imp) {
-		Vertex3 acc = imp / masa;
+		Vertex3 acc = imp / (masa * dt);
 		*acceleration = acc;
 	}
 
@@ -1100,12 +1100,13 @@ public:
 					//Transform Points
 					matrixI.Identity();
 					matrixI.Translated(BoundingBoxes[i]->position->GetX(), BoundingBoxes[i]->position->GetY(), BoundingBoxes[i]->position->GetZ());
-					matrixI.RotateY(-BoundingBoxes[i]->rotation->GetY());
+					matrixI.RotateY(BoundingBoxes[i]->rotation->GetY());
 					matrixI.RotateX(-BoundingBoxes[i]->rotation->GetX());
 					matrixI.RotateZ(-BoundingBoxes[i]->rotation->GetZ());
+
 					matrixJ.Identity();
 					matrixJ.Translated(BoundingBoxes[j]->position->GetX(), BoundingBoxes[j]->position->GetY(), BoundingBoxes[j]->position->GetZ());
-					matrixJ.RotateY(-BoundingBoxes[j]->rotation->GetY());
+					matrixJ.RotateY(BoundingBoxes[j]->rotation->GetY());
 					matrixJ.RotateX(-BoundingBoxes[j]->rotation->GetX());
 					matrixJ.RotateZ(-BoundingBoxes[j]->rotation->GetZ());
 
@@ -1135,16 +1136,21 @@ public:
 						}
 						//If one doesnot have physics, Vector = Normal vector of colliding face
 						else {
-							int best = 0; double relacion = 0;
 							//Debo hacer el caulculo con las normales de I
-							if (BoundingBoxes[i]->physiscs == NULL) { 
-								vectorJ = BoxPlaneInterseccion(matrixI, BoundingBoxes[i]->centerBox, BoundingBoxes[i]->normalesPlane, BoundingBoxes[i]->puntosPlane, matrixJ, BoundingBoxes[j]->centerBox);
+							if (BoundingBoxes[j]->physiscs != NULL) { 
+								vectorJ = BoxPlaneInterseccion(matrixI, BoundingBoxes[i]->centerBox, BoundingBoxes[i]->normalesPlane, BoundingBoxes[i]->puntosPlane, matrixJ, BoundingBoxes[j]->centerBox, *BoundingBoxes[j]->physiscs->velocity);
 								vectorI = -vectorJ;
 							}
 							//Hago el calculo con las normales de J
-							else { 
-								vectorI = BoxPlaneInterseccion(matrixJ, BoundingBoxes[j]->centerBox, BoundingBoxes[j]->normalesPlane, BoundingBoxes[j]->puntosPlane, matrixI, BoundingBoxes[i]->centerBox);
+							else if (BoundingBoxes[i]->physiscs != NULL) {
+								cout << BoundingBoxes[j]->colliderName << endl;
+								vectorI = BoxPlaneInterseccion(matrixJ, BoundingBoxes[j]->centerBox, BoundingBoxes[j]->normalesPlane, BoundingBoxes[j]->puntosPlane, matrixI, BoundingBoxes[i]->centerBox, *BoundingBoxes[i]->physiscs->velocity);
 								vectorJ = -vectorI;
+							}
+							//No se como calcular en que cara intersectan
+							else {
+								vectorI = Vertex3::zero;
+								vectorJ = Vertex3::zero;
 							}
 							cout << vectorI.GetX() << ", " << vectorI.GetY() << ", " << vectorI.GetZ() << endl;
 						}
@@ -1195,8 +1201,8 @@ public:
 	}
 
 	//BoxPlaneInterseccion
-	static Vertex3 BoxPlaneInterseccion(TransformMatrix matrix, Vertex3 centerObj, vector<Vertex3> normalesPlane, vector<Vertex3> puntosPlane, TransformMatrix matrixOther, Vertex3 centerObjOther) {
-		Vertex3 direction = matrix.MultVertex(centerObj) - matrixOther.MultVertex(centerObjOther); direction.Unitario(); //La direccion debe de ir de el otro objeto al bounding box;
+	static Vertex3 BoxPlaneInterseccion(TransformMatrix matrix, Vertex3 centerObj, vector<Vertex3> normalesPlane, vector<Vertex3> puntosPlane, TransformMatrix matrixOther, Vertex3 centerObjOther, Vertex3 velocityOther) {
+		Vertex3 direction = velocityOther; direction.Unitario(); //La direccion debe de ir de el otro objeto al bounding box;
 		Vertex3 point = matrixOther.MultVertex(centerObjOther);
 		int close = 0; double masCerca = DBL_MAX;
 		for (int k = 0; k < normalesPlane.size(); k++) {

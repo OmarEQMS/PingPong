@@ -46,8 +46,8 @@ struct Jugador {
 		if (PitchMenos) rotation->SetX(rotation->GetX() - 10);
 		if (YawMas) rotation->SetY(rotation->GetY() + 2);
 		if (YawMenos) rotation->SetY(rotation->GetY() - 2);
-		if (RollMas) rotation->SetZ(rotation->GetZ() + 10 * index);
-		if (RollMenos) rotation->SetZ(rotation->GetZ() - 10 * index);
+		if (RollMas) rotation->SetZ(rotation->GetZ() + 10);
+		if (RollMenos) rotation->SetZ(rotation->GetZ() - 10);
 	}
 	
 	void Reshape() {
@@ -55,7 +55,13 @@ struct Jugador {
 	}
 
 	void Update() {
-
+		if (rotation->GetY() == 0) {
+			raqueta.material[0].Diffuse(1, 0.2, 0.2);
+		} else if (rotation->GetY() > 0) {
+			raqueta.material[0].Diffuse(0.2, 1, 0.2);
+		} else if (rotation->GetY() < 0) {
+			raqueta.material[0].Diffuse(0.2, 0.2, 1);
+		}
 	}
 };
 
@@ -227,12 +233,21 @@ struct MesaPing {
 };
 
 struct Pelota {
+public:
+	static vector<Pelota*> pelotas;
+public:
 	Vertex3* position;
 	Vertex3* rotation;
 
+	int index;
 	GameObject pelota;
 	BoundingBox box;
 	Physics phy;
+
+	Pelota() {
+		index = pelotas.size();
+		pelotas.push_back(this);
+	}
 
 	void Init() {
 		//Pos and Rot
@@ -249,13 +264,17 @@ struct Pelota {
 		pelota.material[m].Shinnes(128);
 		//Physics
 		phy.Init(position, 1);
-		phy.AddImpulse(Vertex3(0, 0, -1500));
+		phy.AddImpulse(Vertex3(0, 0, -2));
 		//Bounding Box
-		box.Init("ball", position, rotation, &pelota, &phy, 0, OnCollision);
+		box.Init("ball", position, rotation, &pelota, &phy, index, OnCollision);
 	}
 
 	static void OnCollision(int id, BoundingBox* other, Vertex3 direction){
-		cout << other->colliderName << endl;
+		if (other->colliderName == "estadio") {
+			pelotas[id]->phy.velocity->SetVertices(0, 0, 0);
+			pelotas[id]->position->SetVertices(0, 0.8, 0);
+			pelotas[id]->phy.AddImpulse(Vertex3(0, 0, -1.5));
+		}
 	}
 
 	void Update() {
