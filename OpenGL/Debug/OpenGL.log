@@ -14,13 +14,13 @@ d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1093): warning C4018: '<': no coinciden signed/unsigned
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1115): warning C4018: '<': no coinciden signed/unsigned
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1122): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1186): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1193): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1208): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1239): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1246): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1606): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(2096): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1185): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1192): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1207): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1238): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1245): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1605): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(2095): warning C4018: '<': no coinciden signed/unsigned
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\librariesraycasting.h(93): warning C4018: '<': no coinciden signed/unsigned
   main.cpp
   Libraries.h
@@ -39,13 +39,13 @@ d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1093): warning C4018: '<': no coinciden signed/unsigned
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1115): warning C4018: '<': no coinciden signed/unsigned
 d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1122): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1186): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1193): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1208): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1239): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1246): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1606): warning C4018: '<': no coinciden signed/unsigned
-d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(2096): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1185): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1192): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1207): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1238): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1245): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(1605): warning C4018: '<': no coinciden signed/unsigned
+d:\escuela\graficas computacionales\practicas y tareas\opengl\opengl\libraries.h(2095): warning C4018: '<': no coinciden signed/unsigned
   Generando código...
   OpenGL.vcxproj -> D:\Escuela\Graficas Computacionales\Practicas y Tareas\OpenGL\Debug\OpenGL.exe
   OpenGL.vcxproj -> D:\Escuela\Graficas Computacionales\Practicas y Tareas\OpenGL\Debug\OpenGL.pdb (Partial PDB)

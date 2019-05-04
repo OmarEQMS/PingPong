@@ -66,10 +66,7 @@ struct Jugador {
 };
 
 struct Marcador {
-	Vertex3* position;
-	Vertex3* rotation;
-
-	GameObject marcador;
+	GameObject banner, marcadorA, marcadorB;
 	Texture numeros[11];
 	int jugador1, jugador2;
 
@@ -90,31 +87,40 @@ struct Marcador {
 		//Matrix
 		TransformMatrix matrix;
 		//Init - Pos and Rot
-		position = new Vertex3(2.65, 1.7, 0);
-		rotation = new Vertex3(0, 0, 0);
-		marcador.Init(position, rotation, true);
+		banner.Init(new Vertex3(2.65, 1.7, 0), new Vertex3(0, 0, 0), true);
+		marcadorA.Init(new Vertex3(0, 1.7, 4.7), new Vertex3(0, -90, 0), true);
+		marcadorB.Init(new Vertex3(0, 1.7, -4.7), new Vertex3(0, 90, 0), true);
 		//Texture
 		int index;
-		for (int i = 0; i < 5; i++) {
-			marcador.pushTexture(index);
-			marcador.pushMesh(-1, index);
+		//Banner
+		banner.pushTexture(index);
+		banner.pushMesh(-1, index);
+		ReadBitMap::ReadBMPFile(&banner.textura[index], "pingpong.bmp");
+		//Marcador
+		for (int i = 0; i < 2; i++) {
+			marcadorA.pushTexture(index);
+			marcadorA.pushMesh(-1, index);
+			marcadorB.pushTexture(index);
+			marcadorB.pushMesh(-1, index);
 		}
 		//Meshes
-		BasicShapesTool::MakeShape(&marcador, 0, Shape::Quad, 0.5, 0.5, 0.5, 1);
-		BasicShapesTool::MakeShape(&marcador, 1, Shape::Quad, 0.5, 0.5, 0.5, 1);
-		BasicShapesTool::MakeShape(&marcador, 2, Shape::Quad, 0.5, 0.5, 0.5, 1);
-		BasicShapesTool::MakeShape(&marcador, 3, Shape::Quad, 0.5, 0.5, 0.5, 1);
-		BasicShapesTool::MakeShape(&marcador, 4, Shape::Quad, 0.5, 0.5, 0.5, 1);
-		matrix.Identity(); matrix.Translated(0, 0, -1); matrix.RotateZ(-90);
-		matrix.MultGameObjectMesh(&marcador, 0);
-		matrix.Identity(); matrix.Translated(0, 0, -0.5); matrix.RotateZ(-90);
-		matrix.MultGameObjectMesh(&marcador, 1);
-		matrix.Identity(); matrix.Translated(0, 0, 0); matrix.RotateZ(-90);
-		matrix.MultGameObjectMesh(&marcador, 2);
-		matrix.Identity(); matrix.Translated(0, 0, 0.5); matrix.RotateZ(-90);
-		matrix.MultGameObjectMesh(&marcador, 3);
-		matrix.Identity(); matrix.Translated(0, 0, 1); matrix.RotateZ(-90); 
-		matrix.MultGameObjectMesh(&marcador, 4);
+		BasicShapesTool::MakeShape(&banner, 0, Shape::Quad, 0.5, 0.5, 2, 1);
+		matrix.Identity(); matrix.RotateZ(-90);
+		matrix.MultGameObjectMesh(&banner, 0);
+		//MeshesA
+		BasicShapesTool::MakeShape(&marcadorA, 0, Shape::Quad, 0.5, 0.5, 0.5, 1);
+		BasicShapesTool::MakeShape(&marcadorA, 1, Shape::Quad, 0.5, 0.5, 0.5, 1);
+		matrix.Identity(); matrix.Translated(0, 0, -0.25); matrix.RotateZ(-90);
+		matrix.MultGameObjectMesh(&marcadorA, 0);
+		matrix.Identity(); matrix.Translated(0, 0, 0.25); matrix.RotateZ(-90);
+		matrix.MultGameObjectMesh(&marcadorA, 1);
+		//MeshesB
+		BasicShapesTool::MakeShape(&marcadorB, 0, Shape::Quad, 0.5, 0.5, 0.5, 1);
+		BasicShapesTool::MakeShape(&marcadorB, 1, Shape::Quad, 0.5, 0.5, 0.5, 1);
+		matrix.Identity(); matrix.Translated(0, 0, -0.25); matrix.RotateZ(-90);
+		matrix.MultGameObjectMesh(&marcadorB, 0);
+		matrix.Identity(); matrix.Translated(0, 0, +0.25); matrix.RotateZ(-90);
+		matrix.MultGameObjectMesh(&marcadorB, 1);
 		//Set 0-0
 		jugador1 = 0; jugador2 = 0;			
 		Update();
@@ -126,11 +132,12 @@ struct Marcador {
 	void DecJ2() { jugador2--; }
 
 	void Update() {
-		marcador.textura[marcador.meshes[0].textura] = numeros[(jugador1 / 10)];
-		marcador.textura[marcador.meshes[1].textura] = numeros[(jugador1 % 10)];
-		marcador.textura[marcador.meshes[2].textura] = numeros[10];
-		marcador.textura[marcador.meshes[3].textura] = numeros[(jugador2 / 10)];
-		marcador.textura[marcador.meshes[4].textura] = numeros[(jugador2 % 10)];
+		//A
+		marcadorA.textura[marcadorA.meshes[0].textura] = numeros[(jugador1 / 10)];
+		marcadorA.textura[marcadorA.meshes[1].textura] = numeros[(jugador1 % 10)];
+		//B
+		marcadorB.textura[marcadorB.meshes[0].textura] = numeros[(jugador2 / 10)];
+		marcadorB.textura[marcadorB.meshes[1].textura] = numeros[(jugador2 % 10)];
 	}
 
 	//TODO

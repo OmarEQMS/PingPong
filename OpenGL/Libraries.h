@@ -1143,14 +1143,13 @@ public:
 							}
 							//Hago el calculo con las normales de J
 							else if (BoundingBoxes[i]->physiscs != NULL) {
-								cout << BoundingBoxes[j]->colliderName << endl;
 								vectorI = BoxPlaneInterseccion(matrixJ, BoundingBoxes[j]->centerBox, BoundingBoxes[j]->normalesPlane, BoundingBoxes[j]->puntosPlane, matrixI, BoundingBoxes[i]->centerBox, *BoundingBoxes[i]->physiscs->velocity);
 								vectorJ = -vectorI;
 							}
-							//No se como calcular en que cara intersectan
+							//Como ninguno tiene velocidad, el vector de collision es la diferencia entre sus pocisiones
 							else {
-								vectorI = Vertex3::zero;
-								vectorJ = Vertex3::zero;
+								vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
+								vectorJ = -vectorI;
 							}
 							cout << vectorI.GetX() << ", " << vectorI.GetY() << ", " << vectorI.GetZ() << endl;
 						}
