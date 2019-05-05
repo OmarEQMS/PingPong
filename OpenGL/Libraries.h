@@ -1441,7 +1441,7 @@ private:
 			CamaraCenter = CamMat.MultVertex(Point);
 		}
 		if (camZoom > MaxCamZomm) { camZoom = MaxCamZomm; }
-		if (camZoom < 0) { camZoom = 0; }
+		if (camZoom < 0.1) { camZoom = 0.1; }
 		if (rotCam.GetX() > 360) { rotCam.SetX(360); }
 		if (rotCam.GetX() < 0) { rotCam.SetX(0); }
 		if (rotCam.GetY() > 360) { rotCam.SetY(360); }
