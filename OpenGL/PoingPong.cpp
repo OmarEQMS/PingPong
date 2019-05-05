@@ -12,7 +12,7 @@ vector<BoundingBox*> BoundingBox::BoundingBoxes;
 vector<vector<int>> BoundingBox::collisionDetection;
 vector<Physics*> Physics::Physicses;
 Vertex3 Physics::globalAcceleration(0, -9.81, 0);
-double Physics::dt = 0.001; //10ms
+double Physics::dt = 0.005; //10ms
 //Static Specific Classes
 vector<Pelota*> Pelota::pelotas;
 
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
 	Initialization();
 
 	//Timer	
-	t.setInterval(collisionsANDphysics, Physics::dt*1000*10);
+	t.setInterval(collisionsANDphysics, Physics::dt*1000*5);
 
 	//Do main loop
 	glutMainLoop();

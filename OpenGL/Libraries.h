@@ -1151,7 +1151,6 @@ public:
 								vectorI = (*BoundingBoxes[i]->position + BoundingBoxes[i]->centerBox) - (*BoundingBoxes[j]->position + BoundingBoxes[j]->centerBox);
 								vectorJ = -vectorI;
 							}
-							cout << vectorI.GetX() << ", " << vectorI.GetY() << ", " << vectorI.GetZ() << endl;
 						}
 
 						//Make Sure is Unitary
@@ -1591,9 +1590,6 @@ struct AutonomusMachine {
 		aWristL = posicion[(sigPos - 1 + totPos) % totPos][7] + trans*(posicion[sigPos][7] - posicion[(sigPos - 1 + totPos) % totPos][7]);
 	}
 
-	void PrintPositions() {
-		cout << "{ " << aTorso << ", " << aHead << ", " << aShoulderR << ", " << aElbowR << ", " << aWristR << ", " << aShoulderL << ", " << aElbowL << ", " << aWristL << "}" << endl;
-	}
 };
 
 //Normals
