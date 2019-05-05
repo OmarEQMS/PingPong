@@ -40,7 +40,7 @@ void Initialization() {
 	jugador2.Init(-1);
 	mesa.Init();
 	estadio.Init();
-	pelota.Init();
+	pelota.Init(&marcador);
 
 	BoundingBox::AddCollisionDetection(pelota.box.index, mesa.box.index, true);
 	BoundingBox::AddCollisionDetection(pelota.box.index, jugador1.box.index, true);

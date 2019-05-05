@@ -1,69 +1,5 @@
 #pragma once
-//Todo debe tener Init y Update
-
-struct Jugador {
-	Vertex3* position;
-	Vertex3* rotation;
-	Vertex2 posMouse;
-	
-	CameraTool Camera;
-	GameObject raqueta;
-	BoundingBox box;
-	int index;
-
-	Jugador() {}
-	void Init(int i) {
-		index = i;
-		//Init
-		position = new Vertex3(0, 0.35, index*1.2);
-		rotation = new Vertex3(0, 0, 0);
-		raqueta.Init(position, rotation, true);
-		//Camara
-		Camera.Init(60, 0.1, 70);
-		Camera.SetPoint(Vertex3(0, 1, index*2.4), Vertex3(0, 1, index*2.5), Vertex2(((index == 1) ? 90 : 270), 90));
-		//Raqueta OBJ
-		TransformMatrix matrix;
-		matrix.Identity(); matrix.RotateY(90 * index); matrix.RotateZ(-90); matrix.Scale(0.1, 0.1, 0.1);
-		ReadModelOBJ::readOBJ(&raqueta, -1, "Raqueta.obj"); //Las meshes se crean solitas por lo mtllibs
-		matrix.MultGameObject(&raqueta);
-		//Box
-		box.Init("raqueta", position, rotation, &raqueta, NULL, 0, NULL);
-	}
-	
-	void Kesys(bool up, bool down, bool left, bool right) {
-		if (up) posMouse.SetY(posMouse.GetY() + 0.05);
-		if (down) posMouse.SetY(posMouse.GetY() - 0.05);
-		if (left) posMouse.SetX(posMouse.GetX() - 0.05 * index);
-		if (right) posMouse.SetX(posMouse.GetX() + 0.05 * index);
-		if (posMouse.GetX() < -0.7) posMouse.SetX(-0.7);
-		if (posMouse.GetX() > 0.7) posMouse.SetX(0.7);
-		if (posMouse.GetY() < 0) posMouse.SetY(0);
-		if (posMouse.GetY() > 0.5) posMouse.SetY(0.5);
-		position->SetVertices(posMouse.GetX(), 0.35 + posMouse.GetY(), index*1.2);
-	}
-	void KesysRot(bool PitchMas, bool PitchMenos, bool RollMas, bool RollMenos, bool YawMas, bool YawMenos) {
-		if (PitchMas) rotation->SetX(rotation->GetX() + 10);
-		if (PitchMenos) rotation->SetX(rotation->GetX() - 10);
-		if (YawMas) rotation->SetY(rotation->GetY() + 2);
-		if (YawMenos) rotation->SetY(rotation->GetY() - 2);
-		if (RollMas) rotation->SetZ(rotation->GetZ() + 10);
-		if (RollMenos) rotation->SetZ(rotation->GetZ() - 10);
-	}
-	
-	void Reshape() {
-		Camera.Set((index==1)? 0 : 1, 0, 2, 1); //Camara
-	}
-
-	void Update() {
-		if (rotation->GetY() == 0) {
-			raqueta.material[0].Diffuse(1, 0.2, 0.2);
-		} else if (rotation->GetY() > 0) {
-			raqueta.material[0].Diffuse(0.2, 1, 0.2);
-		} else if (rotation->GetY() < 0) {
-			raqueta.material[0].Diffuse(0.2, 0.2, 1);
-		}
-	}
-};
+//Debe tener Init y Update
 
 struct Marcador {
 	GameObject banner, marcadorA, marcadorB;
@@ -71,7 +7,7 @@ struct Marcador {
 	int jugador1, jugador2;
 
 	Marcador() {}
-	void Init(){
+	void Init() {
 		//BMPs
 		ReadBitMap::ReadBMPFile(&numeros[0], "0.bmp");
 		ReadBitMap::ReadBMPFile(&numeros[1], "1.bmp");
@@ -122,10 +58,10 @@ struct Marcador {
 		matrix.Identity(); matrix.Translated(0, 0, +0.25); matrix.RotateZ(-90);
 		matrix.MultGameObjectMesh(&marcadorB, 1);
 		//Set 0-0
-		jugador1 = 0; jugador2 = 0;			
+		jugador1 = 0; jugador2 = 0;
 		Update();
 	}
-	
+
 	void IncJ1() { jugador1++; }
 	void IncJ2() { jugador2++; }
 	void DecJ1() { jugador1--; }
@@ -140,7 +76,143 @@ struct Marcador {
 		marcadorB.textura[marcadorB.meshes[1].textura] = numeros[(jugador2 % 10)];
 	}
 
-	//TODO
+};
+
+struct Pelota {
+public:
+	static vector<Pelota*> pelotas;
+public:
+	int index;
+	Marcador* marcador;
+	Vertex3* position;
+	Vertex3* rotation;
+	GameObject pelota;
+	BoundingBox box;
+	Physics phy;
+	int estado;
+
+	Pelota() {
+		index = pelotas.size();
+		pelotas.push_back(this);
+	}
+
+	void Init(Marcador* marcador) {
+		//Marcador Reference
+		this->marcador = marcador;
+		//Pos and Rot
+		position = new Vertex3(0, 0.8, 0);
+		rotation = new Vertex3(0, 0, 0);
+		//pelotita	
+		pelota.Init(position, rotation, true);
+		int m; pelota.pushMaterial(m);
+		pelota.pushMesh(0, -1);
+		BasicShapesTool::MakeShape(&pelota, 0, Shape::Sphere, 0.05, 0.05, 0.05, 10);
+		pelota.material[m].Ambient(0.8, 0.1, 0.1);
+		pelota.material[m].Diffuse(1, 0.2, 0.2);
+		pelota.material[m].Specular(1, 0.8, 0.8);
+		pelota.material[m].Shinnes(128);
+		//Physics
+		phy.Init(position, 1);
+		phy.AddImpulse(Vertex3(0, 0, -2));
+		estado = 2;
+		//Bounding Box
+		box.Init("ball", position, rotation, &pelota, &phy, index, OnCollision);
+	}
+
+	static void OnCollision(int id, BoundingBox* other, Vertex3 direction) {
+		if (other->colliderName == "J1") {
+			pelotas[id]->estado = 2; //La toca el jugador 1
+		}else if (other->colliderName == "J2") {
+			pelotas[id]->estado = -2; //La toca el jugador -1
+		}else if (other->colliderName == "mesa") {
+			if (pelotas[id]->position->GetZ() > 0) {
+				if (pelotas[id]->estado == -2) pelotas[id]->estado = -1; //La toco el jugadpr 2 y toco la mesa del jugador 1
+			} else {
+				if (pelotas[id]->estado == 2) pelotas[id]->estado = 1; //La toco el jugadpr 1 y toco la mesa del jugador 2
+			}
+		}else if (other->colliderName == "estadio") {
+			if (pelotas[id]->estado == 2) pelotas[id]->marcador->IncJ2(); //La toco el jugador 1 y se cayo
+			if (pelotas[id]->estado == 1) pelotas[id]->marcador->IncJ1(); //La toco el jugadpr 1 y toco la mesa del jugador 2
+			if (pelotas[id]->estado == -1) pelotas[id]->marcador->IncJ2(); //La toco el jugadpr 2 y toco la mesa del jugador 1
+			if (pelotas[id]->estado == -2) pelotas[id]->marcador->IncJ1(); //La toco el jugador 2 y se cayo
+
+			pelotas[id]->phy.velocity->SetVertices(0, 0, 0);
+			pelotas[id]->position->SetVertices(0, 0.8, 0);
+			pelotas[id]->phy.AddImpulse(Vertex3(0, 0, -1.5));
+			pelotas[id]->estado = 2;
+		}
+	}
+
+	void Update() {
+
+	}
+
+};
+
+struct Jugador {
+	Vertex3* position;
+	Vertex3* rotation;
+	Vertex2 posMouse;
+	
+	CameraTool Camera;
+	GameObject raqueta;
+	BoundingBox box;
+	int index;
+
+	Jugador() {}
+	void Init(int i) {
+		index = i;
+		//Init
+		position = new Vertex3(0, 0.35, index*1.2);
+		rotation = new Vertex3(0, 0, 0);
+		raqueta.Init(position, rotation, true);
+		//Camara
+		Camera.Init(60, 0.1, 70);
+		Camera.SetPoint(Vertex3(0, 1, index*2.4), Vertex3(0, 1, index*2.5), Vertex2(((index == 1) ? 90 : 270), 90));
+		//Raqueta OBJ
+		TransformMatrix matrix;
+		matrix.Identity(); matrix.RotateY(90 * index); matrix.RotateZ(-90); matrix.Scale(0.1, 0.1, 0.1);
+		ReadModelOBJ::readOBJ(&raqueta, -1, "Raqueta.obj"); //Las meshes se crean solitas por lo mtllibs
+		matrix.MultGameObject(&raqueta);
+		//Box
+		string name = "J";
+		name += ((index == 1) ? "1" : "2");
+		box.Init(name, position, rotation, &raqueta, NULL, 0, NULL);
+	}
+	
+	void Kesys(bool up, bool down, bool left, bool right) {
+		if (up) posMouse.SetY(posMouse.GetY() + 0.05);
+		if (down) posMouse.SetY(posMouse.GetY() - 0.05);
+		if (left) posMouse.SetX(posMouse.GetX() - 0.05 * index);
+		if (right) posMouse.SetX(posMouse.GetX() + 0.05 * index);
+		if (posMouse.GetX() < -0.7) posMouse.SetX(-0.7);
+		if (posMouse.GetX() > 0.7) posMouse.SetX(0.7);
+		if (posMouse.GetY() < 0) posMouse.SetY(0);
+		if (posMouse.GetY() > 0.5) posMouse.SetY(0.5);
+		position->SetVertices(posMouse.GetX(), 0.35 + posMouse.GetY(), index*1.2);
+	}
+	void KesysRot(bool PitchMas, bool PitchMenos, bool RollMas, bool RollMenos, bool YawMas, bool YawMenos) {
+		if (PitchMas) rotation->SetX(rotation->GetX() + 10);
+		if (PitchMenos) rotation->SetX(rotation->GetX() - 10);
+		if (YawMas) rotation->SetY(rotation->GetY() + 2);
+		if (YawMenos) rotation->SetY(rotation->GetY() - 2);
+		if (RollMas) rotation->SetZ(rotation->GetZ() + 10);
+		if (RollMenos) rotation->SetZ(rotation->GetZ() - 10);
+	}
+	
+	void Reshape() {
+		Camera.Set((index==1)? 0 : 1, 0, 2, 1); //Camara
+	}
+
+	void Update() {
+		if (rotation->GetY() == 0) {
+			raqueta.material[0].Diffuse(1, 0.2, 0.2);
+		} else if (rotation->GetY() > 0) {
+			raqueta.material[0].Diffuse(0.2, 1, 0.2);
+		} else if (rotation->GetY() < 0) {
+			raqueta.material[0].Diffuse(0.2, 0.2, 1);
+		}
+	}
 };
 
 struct Estadio{
@@ -231,61 +303,10 @@ struct MesaPing {
 		matrix.MultGameObjectMesh(&boxGO, 1);
 		//Boxes
 		box.Init("mesa", position, rotation, &boxGO, 0, NULL, 0, NULL);
-		//box[1].Init("mesa", position, rotation, &boxGO, 1, NULL, 1, OnCollision); TODO
+		//box[1].Init("mesa", position, rotation, &boxGO, 1, NULL, 1, OnCollision); 
 	}
 
 	void Update() {
 
 	}
-};
-
-struct Pelota {
-public:
-	static vector<Pelota*> pelotas;
-public:
-	Vertex3* position;
-	Vertex3* rotation;
-
-	int index;
-	GameObject pelota;
-	BoundingBox box;
-	Physics phy;
-
-	Pelota() {
-		index = pelotas.size();
-		pelotas.push_back(this);
-	}
-
-	void Init() {
-		//Pos and Rot
-		position = new Vertex3(0, 0.8, 0);
-		rotation = new Vertex3(0, 0, 0);
-		//pelotita	
-		pelota.Init(position, rotation, true);
-		int m; pelota.pushMaterial(m);
-		pelota.pushMesh(0, -1);
-		BasicShapesTool::MakeShape(&pelota, 0, Shape::Sphere, 0.05, 0.05, 0.05, 10);
-		pelota.material[m].Ambient(0.8, 0.1, 0.1);
-		pelota.material[m].Diffuse(1, 0.2, 0.2);
-		pelota.material[m].Specular(1, 0.8, 0.8);
-		pelota.material[m].Shinnes(128);
-		//Physics
-		phy.Init(position, 1);
-		phy.AddImpulse(Vertex3(0, 0, -2));
-		//Bounding Box
-		box.Init("ball", position, rotation, &pelota, &phy, index, OnCollision);
-	}
-
-	static void OnCollision(int id, BoundingBox* other, Vertex3 direction){
-		if (other->colliderName == "estadio") {
-			pelotas[id]->phy.velocity->SetVertices(0, 0, 0);
-			pelotas[id]->position->SetVertices(0, 0.8, 0);
-			pelotas[id]->phy.AddImpulse(Vertex3(0, 0, -1.5));
-		}
-	}
-
-	void Update() {
-
-	}
-
 };
