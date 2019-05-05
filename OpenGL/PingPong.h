@@ -120,6 +120,8 @@ public:
 	}
 
 	static void OnCollision(int id, BoundingBox* other, Vertex3 direction) {
+		PlaySound("ball.wav", NULL, SND_ASYNC | SND_FILENAME);
+
 		if (other->colliderName == "J1") {
 			pelotas[id]->estado = 2; //La toca el jugador 1
 		}else if (other->colliderName == "J2") {
@@ -220,6 +222,7 @@ struct Estadio{
 	Vertex3* rotation;
 
 	GameObject stadium;
+	GameObject skybox;
 	GameObject boxGO;
 	BoundingBox box[6];
 
@@ -236,6 +239,11 @@ struct Estadio{
 		matrix.Identity(); matrix.Scale(0.03, 0.03, 0.03); matrix.Translated(0, -5.381100, 0);
 		ReadModelOBJ::readOBJ(&stadium, -1, "estadio.obj"); //Las meshes se crean solitas por lo mtllibs
 		matrix.MultGameObject(&stadium);
+		//skyBox
+		skybox.Init(position, rotation, true);
+		matrix.Identity(); matrix.Scale(10, 10, 10); matrix.Translated(0, 0.5, 0); matrix.RotateZ(90);
+		ReadModelOBJ::readOBJ(&skybox, -1, "skybox.obj"); //Las meshes se crean solitas por lo mtllibs
+		matrix.MultGameObject(&skybox);
 		//Box
 		boxGO.Init(position, rotation, false);
 		BasicShapesTool::MakeShape(&boxGO, 0, Shape::Cube, 3, 0.5, 5, 0); //Environment
